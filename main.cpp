@@ -14,7 +14,7 @@ AnalogIn adc_vref(ADC_VREF);
 AnalogIn adc_vbat(ADC_VBAT); // Warning: Not available on all devices
 #endif
 
-DigitalOut led(LED1);
+DigitalOut led(User_LED);
 
 int main()
 {   

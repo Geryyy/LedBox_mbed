@@ -44,14 +44,5 @@
 
 // user led
 void LEDTask();
-DigitalOut LED(User_LED);
-class UserLED{
-    ;
-public:
-    UserLED(void){ LED = 1;  }
-    void off(){ LED = 1; }
-    void on(){  LED = 0; }
-    void toggle(){ LED = !LED; }
-};
 
 #endif // BSP_H
