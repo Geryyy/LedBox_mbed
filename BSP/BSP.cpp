@@ -22,11 +22,69 @@ void PrintSystemInformation(){
 }
 
 
-// AnalogIn adc_temp(ADC_TEMP);
-// AnalogIn adc_vref(ADC_VREF);
+#define LORA_BAUD 57600
 
-//         printf("ADC Temp = %f\n", (adc_temp.read()*100));
-//         printf("ADC VRef = %f\n", adc_vref.read()); 
+UARTSerial *_serial;
+ATCmdParser *_parser;
+
+void RadioTask(){
+    printf("\n RN2483 AT CmdParse\n");
+
+    _serial = new UARTSerial(RADIO_TX,RADIO_RX,LORA_BAUD);
+    _parser = new ATCmdParser(_serial);
+    _parser->debug_on( 1 );
+    _parser->set_delimiter( "\r\n" );
+
+    // get firmware version
+    printf("\nATCmdParser: Retrieving FW version");
+    _parser->send("sys get ver");
+
+    int fw1, fw2, fw3, month, day, year, hour, min, sec;
+    if(_parser->recv("RN2483 %d.%d.%d %d %d %d %d:%d:%d", &fw1, &fw2, &fw3, &month, &day, &year, &hour, &min, &sec)) {
+        printf("\nATCmdParser: FW version: %d.%d.%d", fw1, fw2, fw3);
+        printf("\nATCmdParser: Retrieving FW version success\n");
+    } else { 
+        printf("\nATCmdParser: Retrieving FW version failed\n");
+    }
+}
+
+Serial pc(VCP_TX, VCP_RX); // tx, rx
+Serial device(RADIO_TX, RADIO_RX);  // tx, rx
+void loopTask(){
+    pc.baud(9600);
+    device.baud(LORA_BAUD);
+    printf("serial loopback start...\n");
+    while(1) {
+        if(pc.readable()) {
+            device.putc(pc.getc());
+        }
+        if(device.readable()) {
+            pc.putc(device.getc());
+        }
+    }
+}
+
+void callback_ex() {
+    // Note: you need to actually read from the serial to clear the RX interrupt
+    printf("%c\n", pc.getc());
+}
+
+void radioTask3(){
+        pc.baud(9600);
+    device.baud(LORA_BAUD);
+
+    device.attach(&callback_ex);
+
+    while(1){
+        printf("send message\n");
+        device.printf("sys get ver\r\n");
+        wait(1);
+    }
+
+}
+
+
+
 
 float getUrefCal(){
     uint16_t *UrefCalVal = VREFINT_CAL_ADDR;
