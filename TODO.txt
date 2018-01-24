@@ -1,0 +1,13 @@
+
+BSP:
+- Ref Spannung
+- Temperatur
+
+LED Driver 
+- shutdown
+
+Battery Management
+- shutdown
+
+Radio 
+- shutdown

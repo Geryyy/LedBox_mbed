@@ -42,7 +42,15 @@
 #define HEATER PA_6
 
 
+/* Konstanten */
+
+
 // user led
 void LEDTask();
+void PrintSystemInformation();
+
+float getUrefCal();
+float getSysVoltage();
+float getMCUTemp();
 
 #endif // BSP_H
