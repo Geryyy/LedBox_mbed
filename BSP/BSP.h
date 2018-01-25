@@ -57,4 +57,6 @@ float getUrefCal();
 float getSysVoltage();
 float getMCUTemp();
 
+void testfun();
+
 #endif // BSP_H

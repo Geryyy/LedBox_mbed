@@ -39,8 +39,9 @@ void RadioTask(){
     printf("\nATCmdParser: Retrieving FW version");
     _parser->send("sys get ver");
 
-    int fw1, fw2, fw3, month, day, year, hour, min, sec;
-    if(_parser->recv("RN2483 %d.%d.%d %d %d %d %d:%d:%d", &fw1, &fw2, &fw3, &month, &day, &year, &hour, &min, &sec)) {
+    int fw1, fw2, fw3, day, year, hour, min, sec;
+    char month[4];
+    if(_parser->recv("RN2483 %d.%d.%d %s %d %d %d:%d:%d", &fw1, &fw2, &fw3, month, &day, &year, &hour, &min, &sec)) {
         printf("\nATCmdParser: FW version: %d.%d.%d", fw1, fw2, fw3);
         printf("\nATCmdParser: Retrieving FW version success\n");
     } else { 

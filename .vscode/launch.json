@@ -11,7 +11,7 @@
             "cwd": "${workspaceRoot}",
             "environment": [],
             "externalConsole": true,
-            "debugServerArgs": "-f \"interface/stlink.cfg\" -f \"board/st_nucleo_l1.cfg\" -c \"init\"",
+            "debugServerArgs": "-f interface/stlink.cfg -f board/st_nucleo_l1.cfg -c init",
             "serverLaunchTimeout": 20000,
             "filterStderr": false,
             "filterStdout": false,
