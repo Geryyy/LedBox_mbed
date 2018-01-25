@@ -49,14 +49,10 @@
 void LEDTask();
 void PrintSystemInformation();
 
-void RadioTask();
-void loopTask();
-void radioTask3();
-
 float getUrefCal();
 float getSysVoltage();
 float getMCUTemp();
 
-void testfun();
+
 
 #endif // BSP_H

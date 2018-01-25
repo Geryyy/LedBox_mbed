@@ -17,8 +17,6 @@ int main()
     //SysPrintThread.start(PrintSystemInformation);
     RadioThread.start(RadioTask);
 
-    testfun();
-
     while(true) {
         wait(1.0);
     }
