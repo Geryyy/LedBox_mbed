@@ -46,6 +46,7 @@ PROJECT := LedBox_mbed
 ###############################################################################
 # Objects and Paths
 
+OBJECTS += ./BSP/LEDdriver.o
 OBJECTS += ./BSP/BSP.o
 OBJECTS += ./BSP/lora_radio.o
 OBJECTS += ./main.o

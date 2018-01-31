@@ -15,7 +15,7 @@ int main()
 {   
     LEDThread.start(LEDTask);
     //SysPrintThread.start(PrintSystemInformation);
-    RadioThread.start(RadioTask);
+    //RadioThread.start(RadioTask);
 
     while(true) {
         wait(1.0);
