@@ -16,7 +16,7 @@ private:
 
 public: 
     BatteryManager(PinName SDA, PinName SCL, PinName SMBAlert);
-    serviceSMBAlert();
+    void serviceSMBAlert();
 
 };
 

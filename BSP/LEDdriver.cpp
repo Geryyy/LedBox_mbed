@@ -55,7 +55,7 @@ void LEDdriverTask(){
     LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
     LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
 
-    L1.setILed(0.5); // 50mA
+    L1.setILed(0.0); // 50mA
     L1.setPWM(0.0);
     L1.on();
 
@@ -64,11 +64,12 @@ void LEDdriverTask(){
     L2.off();
 
     float t = 0.0;
+
     while(true){
         wait(0.01);
-        float val = 0.4*(0.8 + sin(2*M_PI*0.5*t));
-        L1.setILed(val);
-        t = t + 0.01;
+         float val = 0.4*(1.0 + sin(2*M_PI*0.5*t));
+         L1.setILed(val);
+         t = t + 0.01;
     }
 }
 

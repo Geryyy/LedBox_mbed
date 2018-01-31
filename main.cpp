@@ -2,6 +2,7 @@
 #include "BSP/BSP.h"
 #include "BSP/lora_radio.h"
 #include "LEDdriver.h"
+#include "BatteryManager.h"
 
 /*
    This basic example just shows how to read the ADC internal channels raw values.
@@ -18,7 +19,9 @@ int main()
     LEDThread.start(LEDTask);
     //SysPrintThread.start(PrintSystemInformation);
     //RadioThread.start(RadioTask);
-    LEDdriverThread.start(LEDdriverTask);
+    //LEDdriverThread.start(LEDdriverTask);
+
+    printf("Deep sleep allowed: %i\r\n", sleep_manager_can_deep_sleep());
 
     while(true) {
         wait(1.0);

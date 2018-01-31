@@ -5,8 +5,12 @@
 DigitalOut led(User_LED);
 void LEDTask(){
     while(true){
-        led = !led;
-        wait(1);
+        // led = !led;
+        // wait(1);
+        led = 0;
+        wait(0.1);
+        led = 1;
+        wait(5.0);
     }
 }
 
