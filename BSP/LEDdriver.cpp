@@ -40,6 +40,7 @@ int LEDdriver::setILed(float val){
 int LEDdriver::setPWM(float val){
     if(val>=0.0 && val <= 1.0){
         pwm->write(val);
+        pwm->period_ms(1);
         return SUCCESS;
     }   
     else
@@ -54,16 +55,36 @@ void LEDdriverTask(){
     LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
     LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
 
-    L1.setILed(1.0); // 50mA
-    L1.setPWM(1.0);
+    L1.setILed(0.5); // 50mA
+    L1.setPWM(0.0);
     L1.on();
 
-    L2.setILed(0.1); // 50mA
-    L2.setPWM(1.0);
+    L2.setILed(0.02); // 50mA
+    L2.setPWM(0.8);
     L2.off();
 
+    float t = 0.0;
     while(true){
-        wait(1.0);
+        wait(0.01);
+        float val = 0.4*(0.8 + sin(2*M_PI*0.5*t));
+        L1.setILed(val);
+        t = t + 0.01;
     }
 }
+
+/*** Messwerte ***/
+/*
+setILED     I
+0.01        0.021
+0.05        0.073
+0.075       0.142
+0.1         0.217
+0.2         0.467      
+0.3         0.594
+0.4         0.654
+0.5         0.705
+0.6         0.766
+
+
+*/
 
