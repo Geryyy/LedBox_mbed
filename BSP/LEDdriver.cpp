@@ -47,5 +47,23 @@ int LEDdriver::setPWM(float val){
 }
 
 
+/*** Testfunktion ***/
 
+void LEDdriverTask(){
+    printf("LEDdriver Task gestartet\n");
+    LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
+    LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
+
+    L1.setILed(1.0); // 50mA
+    L1.setPWM(1.0);
+    L1.on();
+
+    L2.setILed(0.1); // 50mA
+    L2.setPWM(1.0);
+    L2.off();
+
+    while(true){
+        wait(1.0);
+    }
+}
 

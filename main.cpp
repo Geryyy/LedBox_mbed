@@ -1,6 +1,7 @@
 #include "mbed.h"
 #include "BSP/BSP.h"
 #include "BSP/lora_radio.h"
+#include "LEDdriver.h"
 
 /*
    This basic example just shows how to read the ADC internal channels raw values.
@@ -10,12 +11,14 @@
 Thread LEDThread;
 Thread SysPrintThread;
 Thread RadioThread;
+Thread LEDdriverThread;
 
 int main()
 {   
     LEDThread.start(LEDTask);
     //SysPrintThread.start(PrintSystemInformation);
     //RadioThread.start(RadioTask);
+    LEDdriverThread.start(LEDdriverTask);
 
     while(true) {
         wait(1.0);

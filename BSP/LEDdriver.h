@@ -23,4 +23,8 @@ public:
     int off(void);
 };
 
+/*** Testfunktion ***/
+
+void LEDdriverTask(void);
+
 #endif //LEDDRIVER_H
