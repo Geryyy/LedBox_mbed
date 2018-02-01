@@ -38,16 +38,30 @@ private:
     I2C *_i2c;
     InterruptIn *_Alert;
     int _devAddr;
+    float _R_SNSI;
+    float _R_SNSB;
+    int _cellcount;
 
 public: 
     BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert);
     void serviceSMBAlert();
     int write(char reg, uint16_t data);
     int read(char reg, uint16_t *rxdata);
+    float getBatTemp();
+    float getUBat();
+    float getIBat();
+    float getUin();
+    float getUsys();
+    float getIin();
+    float getTdie();
+    float getBatRes();
+    int setIchargeRel(float Icharge_rel);
+    float getIchargeRel();
 };
 
 /*** Testfunktion ***/
 
 void BatteryTask(void);
+void BatteryTask2(void);
 
 #endif // BATTERYMANAGER_H
