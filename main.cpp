@@ -13,6 +13,7 @@ Thread LEDThread;
 Thread SysPrintThread;
 Thread RadioThread;
 Thread LEDdriverThread;
+Thread BatteryThread;
 
 int main()
 {   
@@ -20,10 +21,12 @@ int main()
     //SysPrintThread.start(PrintSystemInformation);
     //RadioThread.start(RadioTask);
     //LEDdriverThread.start(LEDdriverTask);
+    BatteryThread.start(BatteryTask);
 
     printf("Deep sleep allowed: %i\r\n", sleep_manager_can_deep_sleep());
 
     while(true) {
         wait(1.0);
+        sleep();
     }
 }

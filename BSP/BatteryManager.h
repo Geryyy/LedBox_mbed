@@ -9,16 +9,25 @@
 
 #include "mbed.h"
 
+#define LTC4015_ADDR (0xD0)
+#define ALERTADDR (0x19)
+
+
 class BatteryManager{
 private:
-    I2C *i2c;
-    InterruptIn *Alert;
+    I2C *_i2c;
+    InterruptIn *_Alert;
+    int _devAddr;
 
 public: 
-    BatteryManager(PinName SDA, PinName SCL, PinName SMBAlert);
+    BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert);
     void serviceSMBAlert();
-
+    int write(char reg, uint16_t data);
+    int read(char reg, uint16_t *rxdata);
 };
 
+/*** Testfunktion ***/
+
+void BatteryTask(void);
 
 #endif // BATTERYMANAGER_H
