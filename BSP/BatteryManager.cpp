@@ -43,6 +43,15 @@ int BatteryManager::read(char reg, uint16_t *rxdata){
     else return ERROR;
 }
 
+float BatteryManager::getBatTemp(){
+    uint16_t NTC_ratio = 0;
+    this.read(R_NTC_RATIO, &NTC_ratio);
+    float RNTCBIAS = 10000.0; // 10 kOhm
+    float RNTC = NTC_ratio • RNTCBIAS/(21845.0 – NTC_ratio);
+    float B;
+    float T = (B*TN)/(TN*ln(RT/RN)+B);
+}
+
 
 /*** Testfunktion ***/
 

@@ -13,6 +13,26 @@
 #define ALERTADDR (0x19)
 
 
+/* LTC4015 register */
+
+// rw
+#define R_ICHARGE_TARGET 0x1A
+#define R_VCHARGE_SETTING 0x1B
+
+// read
+#define R_VBAT 0x3A
+#define R_VIN  0x3B
+#define R_VSYS 0x3C
+#define R_IBAT 0x3D
+#define R_IIN  0x3E
+#define R_DIE_TEMP 0x3F
+#define R_NTC_RATIO 0x40
+#define R_BSR 0x41
+
+#define R_MEAS_SYS_VALID 0x4A
+
+
+
 class BatteryManager{
 private:
     I2C *_i2c;
