@@ -19,14 +19,14 @@ int main()
 {   
     LEDThread.start(LEDTask);
     //SysPrintThread.start(PrintSystemInformation);
-    //RadioThread.start(RadioTask);
-    LEDdriverThread.start(LEDdriverTask);
-    BatteryThread.start(BatteryTask2);
+    RadioThread.start(RadioTask);
+    //LEDdriverThread.start(LEDdriverTask);
+    //BatteryThread.start(BatteryTask2);
 
-    printf("Deep sleep allowed: %i\r\n", sleep_manager_can_deep_sleep());
+    //printf("Deep sleep allowed: %i\r\n", sleep_manager_can_deep_sleep());
 
     while(true) {
         wait(1.0);
-        sleep();
+        //sleep();
     }
 }

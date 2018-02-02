@@ -69,8 +69,9 @@ void RadioTask(){
     radio.printFwVersion();
     radio.getVDD();
     radio.reset();
-    wait(1.0);
-    
 
+    while(1){
+        wait(1.0);
+    } 
 }
 
