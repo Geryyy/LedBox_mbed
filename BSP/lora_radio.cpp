@@ -51,7 +51,7 @@ int LoraRadio::reset(){
 int LoraRadio::getVDD(){
     _parser->flush();
     _parser->send("sys get vdd");
-    if(_parser->recv("%d%d%d%d",&u_vdd[0],&u_vdd[1],&u_vdd[2],&u_vdd[3])) {
+    if(_parser->recv("%d",&u_vdd[0],&u_vdd[1],&u_vdd[2],&u_vdd[3])) {
         printf("RN2483 VDD: %d%d%d%d",u_vdd[0],u_vdd[1],u_vdd[2],u_vdd[3]);
         return SUCCESS;
     } else { 
@@ -66,6 +66,7 @@ void RadioTask(){
     printf("\n RN2483 AT CmdParse\n");
 
     LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, LORA_BAUD, 1);
+    wait_ms(500);
     radio.printFwVersion();
     radio.getVDD();
     radio.reset();
