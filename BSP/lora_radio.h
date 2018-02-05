@@ -1,3 +1,8 @@
+/* @file: lora_radio.h
+ * @author: Gerald Ebmer
+ * @date: 31.01.2018
+ * @brief: header file for support module for lora module rn2483
+ */
 
 #ifndef LORA_RADIO_H
 #define LORA_RADIO_H

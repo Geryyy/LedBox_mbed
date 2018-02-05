@@ -46,6 +46,7 @@ PROJECT := LedBox_mbed
 ###############################################################################
 # Objects and Paths
 
+OBJECTS += ./BSP/Watchdog.o
 OBJECTS += ./BSP/BatteryManager.o
 OBJECTS += ./BSP/LEDdriver.o
 OBJECTS += ./BSP/BSP.o

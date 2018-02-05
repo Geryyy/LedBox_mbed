@@ -1,3 +1,9 @@
+/* @file: lora_radio.cpp
+ * @author: Gerald Ebmer
+ * @date: 31.01.2018
+ * @brief: support for lora module rn2483
+ */
+
 #include "mbed.h"
 #include "BSP/BSP.h"
 #include "BSP/lora_radio.h"
