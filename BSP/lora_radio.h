@@ -21,6 +21,7 @@ public:
     void setSleep(int ms);
     int reset();
     int getVDD();
+    int send(char *data, int len);
 
 private:
     int getFwVersion();
