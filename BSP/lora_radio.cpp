@@ -10,6 +10,27 @@ LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, int baud = LORA_BAUD, int deb
     _parser = new ATCmdParser(_serial);
     //_parser->debug_on( debug );
     _parser->set_delimiter( "\r\n" );
+
+    /* radio config */
+    //_serial->send_break();
+    _parser->send("sys reset");
+    _parser->send("radio set mod lora");
+    _parser->send("radio set freq 868100000");
+    _parser->send("radio set pwr 14");
+    _parser->send("radio set sf sf12");
+    _parser->send("radio set afcbw 125");
+    _parser->send("radio set rxbw 250");
+    _parser->send("radio set fdev 5000");
+    _parser->send("radio set prlen 8");
+    _parser->send("radio set crc on");
+    _parser->send("radio set cr 4/8");
+    _parser->send("radio set wdt 5500");
+    _parser->send("radio set sync 12");
+    _parser->send("radio set bw 250");
+    _parser->send("sys get hweui");
+    _parser->send("mac pause");
+    wait_ms(5);
+    _parser->flush();
 }
 
 int LoraRadio::getFwVersion(){
@@ -85,23 +106,24 @@ int LoraRadio::send(char *data, int len){
     putc(_parser->getc(),stdout);
     putc('\n',stdout);
     return SUCCESS;
-    // _parser->recv("%s",rxdat);
-    // if(strcmp(rxdat, "ok") == 0){
-    //     fprintf(stdout, "%s %d: ok\n", __FILE__, __LINE__);
-    //     return SUCCESS;
-    // }
-    // else if(strcmp(rxdat, "invalid_param") == 0){
-    //     fprintf(stderr, "%s %d: invalid param\n", __FILE__, __LINE__);
-    //     return ERROR;
-    // }
-    // else if(strcmp(rxdat, "busy") == 0){
-    //     fprintf(stderr, "%s %d: busy\n", __FILE__, __LINE__);
-    //     return ERROR;
-    // }
-    // else{
-    //     fprintf(stderr, "%s %d: unknown error\n", __FILE__, __LINE__);
-    //     return ERROR;
-    // }
+
+}
+
+int LoraRadio::readLine(char **data){
+    #define BUFFLEN 64
+    static char msg[BUFFLEN];
+    int i = 0;
+    while(i<(BUFFLEN-1)){
+        msg[i] = _parser->getc();
+        if(msg[i] == '\n'){
+            break;
+        }
+        i++;
+    }
+    msg[i+1] = '\0';
+    *data = msg;
+    return i;
+    #undef BUFFLEN
 }
 
 

@@ -22,6 +22,7 @@ public:
     int reset();
     int getVDD();
     int send(char *data, int len);
+    int readLine(char **data);
 
 private:
     int getFwVersion();
