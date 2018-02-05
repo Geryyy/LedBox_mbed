@@ -10,8 +10,8 @@
 
 Watchdog::Watchdog(float period_s){
   _hiwdg.Instance = IWDG;
-  _hiwdg.Init.Prescaler = SystemCoreClock / 1000; // get kHz clock for WD
-  _hiwdg.Init.Reload = (uint16_t)(period_s*1000.0); // 12 Bit !!
+  _hiwdg.Init.Prescaler = 0x02; // div 16
+  _hiwdg.Init.Reload = (uint16_t)(period_s*1000000.0/16.0); // 12 Bit !! Watchdog LS Clk 1 MHz
   if (HAL_IWDG_Init(&_hiwdg) != HAL_OK)
   {
     fprintf(stderr,"error: __FILE__, __LINE__\n");
@@ -26,10 +26,10 @@ void Watchdog::kick(){
 /*** task ***/
 
 void WatchdogTask(){
-    Watchdog lessie = Watchdog(5);
+    Watchdog lessie = Watchdog(1);
 
     while(true){
         lessie.kick();
-        wait_ms(50);
+        wait_ms(90);
     }
 }
