@@ -139,28 +139,30 @@ int LoraRadio::getVDD(){
 }
 
 
-int LoraRadio::send(char *data, int len){
-    char rxdat[32] = {0};
+int LoraRadio::sendBytes(char *data, int len){
+    char *ret;
+    int i = 0;
     char txdat[10+2*64] = {0}; // "radio tx <payload 64 bytes>\0";
-    if(len >= 64){
+    int hexlen = 2*len; // zwei hex zeichen pro byte
+    
+    if(hexlen >= 64){
         fprintf(stderr, "%s %d: <len> too long\n", __FILE__, __LINE__);
         return ERROR; // FSK Modulation maximal 64 Bytes
     }
+
     sprintf(txdat, "radio tx ");
     // copy payload
-    for(int i = 0; i<(len);i+=2){
-        sprintf(&txdat[i+9], "%.2x", data[i]);
+    for(int i = 0; i<(len);i++){
+        sprintf(&txdat[2*i+9], "%.2x", data[i]);
     }
-    _parser->flush();
-    //_parser->send("mac pause");
-    // _parser->flush();
-    _parser->send("radio tx deadbeef");
+    _parser->send(txdat);
 
-    putc(_parser->getc(),stdout);
-    putc(_parser->getc(),stdout);
-    putc('\n',stdout);
+    i = readLine(&ret);
+    printf("lora return len: %d, msg: %s\n",i, ret);
+    i = readLine(&ret);
+    printf("lora return len: %d, msg: %s\n",i, ret);
+
     return SUCCESS;
-
 }
 
 int LoraRadio::readLine(char **data){
@@ -207,9 +209,9 @@ void RadioTask(){
     char *msg = (char*)"Hello World!"; 
 
     while(1){
-        wait(10.0);
-        // radio.send(msg,strlen(msg));
-        radio.sendtest();
+        wait(2.0);
+        radio.sendBytes(msg,strlen(msg));
+       // radio.sendtest();
     } 
 }
 

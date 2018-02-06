@@ -26,7 +26,7 @@ public:
     void setSleep(int ms);
     int reset();
     int getVDD();
-    int send(char *data, int len);
+    int sendBytes(char *data, int len);
     int readLine(char **data);
     void sendtest();
 
