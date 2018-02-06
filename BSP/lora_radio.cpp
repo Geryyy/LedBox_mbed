@@ -14,29 +14,77 @@
 LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, int baud = LORA_BAUD, int debug = 0){
     _serial = new UARTSerial(PinTX,PinRX,baud);
     _parser = new ATCmdParser(_serial);
-    //_parser->debug_on( debug );
+    _parser->debug_on( debug );
     _parser->set_delimiter( "\r\n" );
 
+    char *ret;
     /* radio config */
     //_serial->send_break();
     _parser->send("sys reset");
+    readLine(&ret);  
+    if(debug) printf("%s\n",ret); 
+
     _parser->send("radio set mod lora");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("radio set freq 868100000");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("radio set pwr 14");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("radio set sf sf12");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("radio set afcbw 125");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("radio set rxbw 250");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("radio set fdev 5000");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("radio set prlen 8");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("radio set crc on");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("radio set cr 4/8");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("radio set wdt 5500");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("radio set sync 12");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("radio set bw 250");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("sys get hweui");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     _parser->send("mac pause");
+    readLine(&ret);
+    if(debug) printf("%s\n",ret);
+
     wait_ms(5);
-    _parser->flush();
 }
 
 int LoraRadio::getFwVersion(){
@@ -132,6 +180,21 @@ int LoraRadio::readLine(char **data){
     #undef BUFFLEN
 }
 
+void LoraRadio::sendtest(){
+    char msg[] = "radio tx deadbeef";
+    _parser->flush();
+    //_parser->send("mac pause");
+    // _parser->flush();
+    _parser->send(msg);
+
+    char *ret;
+    int i = 0;
+    i = readLine(&ret);
+    printf("lora return len: %d, msg: %s\n",i, ret);
+    i = readLine(&ret);
+    printf("lora return len: %d, msg: %s\n",i, ret);
+}
+
 
 
 /*** Task ***/
@@ -140,15 +203,13 @@ void RadioTask(){
 
     LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, LORA_BAUD, 1);
     wait_ms(500);
-    radio.printFwVersion();
-    radio.getVDD();
-    radio.reset();
 
     char *msg = (char*)"Hello World!"; 
 
     while(1){
-        wait(1.0);
-        radio.send(msg,strlen(msg));
+        wait(10.0);
+        // radio.send(msg,strlen(msg));
+        radio.sendtest();
     } 
 }
 

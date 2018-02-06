@@ -28,6 +28,7 @@ public:
     int getVDD();
     int send(char *data, int len);
     int readLine(char **data);
+    void sendtest();
 
 private:
     int getFwVersion();
