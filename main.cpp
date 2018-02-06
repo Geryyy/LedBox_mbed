@@ -24,7 +24,7 @@ int main()
     LEDThread.start(LEDTask);
     //SysPrintThread.start(PrintSystemInformation);
     RadioThread.start(RadioTask);
-    //LEDdriverThread.start(LEDdriverTask);
+    LEDdriverThread.start(LEDdriverTask);
     //BatteryThread.start(BatteryTask2);
 
     //printf("Deep sleep allowed: %i\r\n", sleep_manager_can_deep_sleep());
