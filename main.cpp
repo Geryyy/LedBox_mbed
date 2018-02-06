@@ -17,6 +17,7 @@ Thread WatchdogThread;
 int main()
 {   
     init();
+    //Watchdog Lessie = Watchdog(1);
     WatchdogThread.start(WatchdogTask);
     LEDThread.start(LEDTask);
     //SysPrintThread.start(PrintSystemInformation);

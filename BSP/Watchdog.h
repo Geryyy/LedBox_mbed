@@ -22,6 +22,7 @@ public:
 /*** task ***/
 
 void WatchdogTask();
+void WatchdogTest();
 
 
 #endif // WATCHDOG_H
