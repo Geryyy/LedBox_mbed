@@ -4,6 +4,7 @@
 #include "LEDdriver.h"
 #include "BatteryManager.h"
 #include "Watchdog.h"
+#include "DeviceStats.h"
 
 void init();
 
@@ -17,6 +18,7 @@ Thread WatchdogThread;
 int main()
 {   
     init();
+    
     //Watchdog Lessie = Watchdog(1);
     WatchdogThread.start(WatchdogTask);
     LEDThread.start(LEDTask);
@@ -36,4 +38,6 @@ int main()
 void init(){
     printf("LED Box Rev 0.1\nGerald Ebmer (c) 2018\nACIN TU WIEN\n\n");
     printf("System Clock: %ld\n", SystemCoreClock);
+    procResetCounter();
+    printDeviceStats();
 }

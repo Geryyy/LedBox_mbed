@@ -18,4 +18,8 @@ typedef struct ResetCounter_s{
     uint32_t LPRST; // low-power reset
 }ResetCounter_t;
 
+void procResetCounter();
+void clearResetCounter();
+void printDeviceStats();
+
 #endif // DEVICESTATS_H
