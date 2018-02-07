@@ -11,7 +11,7 @@
 #include <stdlib.h>
 
 
-LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, int baud = LORA_BAUD, int debug = 0){
+LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, int baud = LORA_BAUD, int debug = DEBUG_OFF){
     _serial = new UARTSerial(PinTX,PinRX,baud);
     _parser = new ATCmdParser(_serial);
     _parser->debug_on( debug );
@@ -84,7 +84,7 @@ LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, int baud = LORA_BAUD, int deb
     readLine(&ret);
     if(debug) printf("%s\n",ret);
 
-    wait_ms(5);
+    wait_ms(10);
 }
 
 int LoraRadio::getFwVersion(){
@@ -142,10 +142,10 @@ int LoraRadio::getVDD(){
 int LoraRadio::sendBytes(char *data, int len){
     char *ret;
     int i = 0;
-    char txdat[10+2*64] = {0}; // "radio tx <payload 64 bytes>\0";
+    char txdat[10+2*255] = {0}; // "radio tx <payload 64 bytes>\0";
     int hexlen = 2*len; // zwei hex zeichen pro byte
     
-    if(hexlen >= 64){
+    if(hexlen >= 255){
         fprintf(stderr, "%s %d: <len> too long\n", __FILE__, __LINE__);
         return ERROR; // FSK Modulation maximal 64 Bytes
     }

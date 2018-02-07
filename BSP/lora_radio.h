@@ -8,6 +8,8 @@
 #define LORA_RADIO_H
 
 #define LORA_BAUD 57600
+#define DEBUG_ON 1
+#define DEBUG_OFF 0
 
 void RadioTask();
 

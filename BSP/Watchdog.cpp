@@ -28,22 +28,22 @@ void Watchdog::kick(){
 /*** task ***/
 
 void WatchdogTask(){
-    Watchdog lessie = Watchdog(1);
+    Watchdog lessie = Watchdog(4);
 
     while(true){
         lessie.kick();
-        wait_ms(900);
+        wait_ms(2);
     }
 }
 
 DigitalIn Taster(USER_BUTTON);
 void WatchdogTest(){
-    Watchdog lessie = Watchdog(1);
+    Watchdog lessie = Watchdog(4);
 
     while(true){
         if(Taster){
             lessie.kick();
         }
-        wait_ms(900);
+        wait_ms(2);
     }
 }
