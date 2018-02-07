@@ -67,9 +67,9 @@ void LEDdriverTask(){
 
     while(true){
         wait(0.01);
-         float val = 1*(1.0 + sin(2*M_PI*0.5*t));
+         float val = 0.1*(1.0 + sin(2*M_PI*0.5*t));
          L1.setILed(val);
-         val = 1*(1.0 + cos(2*M_PI*0.5*t));
+         val = 0.1*(1.0 + cos(2*M_PI*0.5*t));
          L2.setILed(val);
          t = t + 0.01;
     }

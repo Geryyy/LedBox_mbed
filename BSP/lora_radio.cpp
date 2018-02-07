@@ -17,6 +17,12 @@ LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, int baud = LORA_BAUD, int deb
     _parser->debug_on( debug );
     _parser->set_delimiter( "\r\n" );
 
+    /* Hard reset */
+    DigitalOut _resetPin(RADIO_RESET,0);
+    wait_ms(1);
+    _resetPin = 1;
+    wait_ms(5);
+     
     char *ret;
     /* radio config */
     //_serial->send_break();

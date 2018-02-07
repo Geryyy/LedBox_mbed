@@ -26,7 +26,7 @@ void BatteryManager::serviceSMBAlert(){
 }
 
 
-int BatteryManager::write(char reg, uint16_t data){
+int BatteryManager::write(char reg, int16_t data){
     char tx[3] = {  reg, \
                     (char)((data>>0)&0xFF), /* LB */
                     (char)((data>>8)&0xFF) }; /* HB */
@@ -37,7 +37,7 @@ int BatteryManager::write(char reg, uint16_t data){
     else return ERROR;
 }
 
-int BatteryManager::read(char reg, uint16_t *rxdata){
+int BatteryManager::read(char reg, int16_t *rxdata){
     char rx[2] = { 0x00, 0x00 };
     int error = SUCCESS;
     error += _i2c->write(_devAddr, &reg, 1, false); // register waehlen
@@ -49,7 +49,7 @@ int BatteryManager::read(char reg, uint16_t *rxdata){
 }
 
 float BatteryManager::getBatTemp(){
-    uint16_t NTC_ratio = 0;
+    int16_t NTC_ratio = 0;
     this->read(R_NTC_RATIO, &NTC_ratio);
     float RNTCBIAS = 10000.0; // 10 kOhm
     float RT = NTC_ratio * RNTCBIAS/(21845.0 - NTC_ratio);
@@ -61,50 +61,50 @@ float BatteryManager::getBatTemp(){
 }
 
 float BatteryManager::getUBat(){
-    uint16_t VBAT = 0;
+    int16_t VBAT = 0;
     this->read(R_VBAT, &VBAT);
     return (float)VBAT * 0.000192264 * (float)_cellcount;
 }
 
 
 float BatteryManager::getIBat(){
-    uint16_t IBAT = 0;
+    int16_t IBAT = 0;
     this->read(R_IBAT, &IBAT);
     return ((float)IBAT * 0.00000146487 / _R_SNSB);
 }
 
 float BatteryManager::getUin(){
-    uint16_t VIN = 0;
+    int16_t VIN = 0;
     this->read(R_VIN, &VIN);
     return (float)VIN * 0.001648;
 }
 
 float BatteryManager::getUsys(){
-    uint16_t VSYS = 0;
+    int16_t VSYS = 0;
     this->read(R_VSYS, &VSYS);
     return (float)VSYS * 0.001648;
 }
 
 float BatteryManager::getIin(){
-    uint16_t IIN = 0;
+    int16_t IIN = 0;
     this->read(R_IIN, &IIN);
     return (float)IIN * 0.00000146487 / _R_SNSI;
 }
 
 float BatteryManager::getTdie(){
-    uint16_t TDIE = 0;
+    int16_t TDIE = 0;
     this->read(R_DIE_TEMP, &TDIE);
     return ((float)TDIE - 12010.0)/45.6;
 }
 
 float BatteryManager::getBatRes(){
-    uint16_t BSR;
+    int16_t BSR;
     this->read(R_BSR, &BSR);
     return (float)BSR * _R_SNSB / 500.0 * (float)_cellcount;
 }
 
 int BatteryManager::setIchargeRel(float Icharge_rel){
-    uint16_t ICHARGE_TARGET = 0;
+    int16_t ICHARGE_TARGET = 0;
     if(Icharge_rel >= 0.0 && Icharge_rel <= 1.0){
         ICHARGE_TARGET = (uint16_t)(32.0 * Icharge_rel);
         this->write(R_ICHARGE_TARGET,ICHARGE_TARGET);
@@ -117,7 +117,7 @@ int BatteryManager::setIchargeRel(float Icharge_rel){
 
 float BatteryManager::getIchargeRel(){
     float IchargeRel = 0.0;
-    uint16_t ICHARGE_TARGET;
+    int16_t ICHARGE_TARGET;
     this->read(R_ICHARGE_TARGET, &ICHARGE_TARGET);
     IchargeRel = (float)ICHARGE_TARGET / 32.0;
     return IchargeRel;
@@ -131,7 +131,7 @@ float BatteryManager::getIchargeRel(){
 void BatteryTask(){
     BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
     char reg = 0x00;
-    uint16_t rx = 0;
+    int16_t rx = 0;
     while(true){
         bat.read(reg,&rx);
         printf("register: %x \tvalue: %hx\n", reg, rx);

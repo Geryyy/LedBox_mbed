@@ -45,8 +45,8 @@ private:
 public: 
     BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert);
     void serviceSMBAlert();
-    int write(char reg, uint16_t data);
-    int read(char reg, uint16_t *rxdata);
+    int write(char reg, int16_t data);
+    int read(char reg, int16_t *rxdata);
     float getBatTemp();
     float getUBat();
     float getIBat();

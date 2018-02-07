@@ -29,6 +29,7 @@
 #define RADIO_RX PA_10
 #define RADIO_CTS PA_11
 #define RADIO_RTS PA_12
+#define RADIO_RESET PC_3
 
 // Battery Management
 #define SMBA PB_5

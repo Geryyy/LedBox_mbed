@@ -48,6 +48,16 @@ void BatteryTaskRadio(){
     BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
     LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, LORA_BAUD, DEBUG_ON);
     // wait_ms(10);
+    LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
+    LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
+
+    // L1.setILed(0.1); // 50mA
+    // L1.setPWM(0.0);
+    // L1.on();
+
+    // L2.setILed(0.1); // 50mA
+    // L2.setPWM(0.0);
+    // L2.on();
 
     // char *msg = (char*)"Hello World!"; 
     char msg[1024] = {0};
