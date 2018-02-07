@@ -26,7 +26,7 @@ int main()
     LEDThread.start(LEDTask);
     //SysPrintThread.start(PrintSystemInformation);
     RadioThread.start(BatteryTaskRadio);
-    // LEDdriverThread.start(LEDdriverTask);
+    LEDdriverThread.start(LEDdriverTask);
     //BatteryThread.start(BatteryTask2);
 
     //printf("Deep sleep allowed: %i\r\n", sleep_manager_can_deep_sleep());
@@ -47,19 +47,7 @@ void init(){
 void BatteryTaskRadio(){
     BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
     LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, LORA_BAUD, DEBUG_ON);
-    // wait_ms(10);
-    LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
-    LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
 
-    // L1.setILed(0.1); // 50mA
-    // L1.setPWM(0.0);
-    // L1.on();
-
-    // L2.setILed(0.1); // 50mA
-    // L2.setPWM(0.0);
-    // L2.on();
-
-    // char *msg = (char*)"Hello World!"; 
     char msg[1024] = {0};
     while(1){
         sprintf(msg, "Tbat:\t%4.1f C\nUbat:\t%4.2f V\nIbat:\t%4.3f A\nUin:\t%4.2f V\nUsys:\t%4.2f V\nIin:\t%4.3f A\nTdie:\t%4.1f C\n\r",\
@@ -70,10 +58,7 @@ void BatteryTaskRadio(){
             bat.getUsys(),\
             bat.getIin(),\
             bat.getTdie() );
-        // sprintf(msg,"Hello World!");
         radio.sendBytes(msg,strlen(msg));
         wait(1);
-        
-       // radio.sendtest();
     } 
 }
