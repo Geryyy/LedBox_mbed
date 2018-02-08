@@ -26,7 +26,7 @@ int main()
     LEDThread.start(LEDTask);
     //SysPrintThread.start(PrintSystemInformation);
     RadioThread.start(BatteryTaskRadio);
-    LEDdriverThread.start(LEDdriverTask);
+    // LEDdriverThread.start(LEDdriverTask);
     //BatteryThread.start(BatteryTask2);
 
     //printf("Deep sleep allowed: %i\r\n", sleep_manager_can_deep_sleep());
@@ -46,7 +46,7 @@ void init(){
 
 void BatteryTaskRadio(){
     BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
-    LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, LORA_BAUD, DEBUG_ON);
+    LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, RADIO_RESET, LORA_BAUD, DEBUG_ON);
 
     char msg[1024] = {0};
     while(1){

@@ -11,16 +11,17 @@
 #include <stdlib.h>
 
 
-LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, int baud = LORA_BAUD, int debug = DEBUG_OFF){
+LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = LORA_BAUD, int debug = DEBUG_OFF){
+    _resetPin = new DigitalOut(PinNRST);
     _serial = new UARTSerial(PinTX,PinRX,baud);
     _parser = new ATCmdParser(_serial);
     _parser->debug_on( debug );
     _parser->set_delimiter( "\r\n" );
 
     /* Hard reset */
-    DigitalOut _resetPin(RADIO_RESET,0);
+    _resetPin->write(0);
     wait_ms(1);
-    _resetPin = 1;
+    _resetPin->write(1);
     wait_ms(5);
      
     char *ret;
@@ -209,7 +210,7 @@ void LoraRadio::sendtest(){
 void RadioTask(){
     printf("\n RN2483 AT CmdParse\n");
 
-    LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, LORA_BAUD, 1);
+    LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, RADIO_RESET, LORA_BAUD, DEBUG_ON);
     wait_ms(500);
 
     char *msg = (char*)"Hello World!"; 

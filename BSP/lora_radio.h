@@ -17,13 +17,14 @@ class LoraRadio{
 private:
     UARTSerial *_serial;
     ATCmdParser *_parser;
+    DigitalOut *_resetPin;
     int fw[3];
     int day, year, hour, min, sec;
     char month[4];
     int u_vdd[4]; // RN2483 VDD in [mV]
 
 public: 
-    LoraRadio(PinName PinTX, PinName PinRX, int baud, int debug);
+    LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud, int debug);
     void printFwVersion();
     void setSleep(int ms);
     int reset();
