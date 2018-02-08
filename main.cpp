@@ -46,7 +46,7 @@ void init(){
 
 void BatteryTaskRadio(){
     BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
-    LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, RADIO_RESET, LORA_BAUD, DEBUG_ON);
+    LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, RADIO_RESET, LORA_BAUD, DEBUG_OFF);
 
     char msg[1024] = {0};
     while(1){
@@ -59,6 +59,7 @@ void BatteryTaskRadio(){
             bat.getIin(),\
             bat.getTdie() );
         radio.sendBytes(msg,strlen(msg));
+        bat.printStatus();
         wait(1);
     } 
 }
