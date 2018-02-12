@@ -9,6 +9,8 @@
 #include "BSP/lora_radio.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "libsmp.h"
+#include "libfifo.h"
 
 
 LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = LORA_BAUD, int debug = DEBUG_OFF){
@@ -220,5 +222,42 @@ void RadioTask(){
         radio.sendBytes(msg,strlen(msg));
        // radio.sendtest();
     } 
+}
+
+
+
+/*** RADIO SMP COM ***/
+unsigned char buffer[100];
+
+fifo_t fifo;
+smp_struct_t smp;
+
+signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
+{
+    return 0;
+}
+
+void RadioSMPTask()
+{
+
+    unsigned int frameLength; //Länge des SMP Frames
+    unsigned char transmitBuffer[SMP_SEND_BUFFER_LENGTH(1000)]; //Puffer in den das fertige SMP Packet geschrieben wird
+    //Das SMP_SEND_BUFFER_LENGTH Makro erzeugt einen Puffer in welchem das SMP Packet auch im worst case platz findet, in vielen Fällen kann der Puffer jedoch verkleinert werden
+    //taucht das Preamble in den gesendeten Daten nicht auf, kann als Puffergröße "Läng der größten Nachricht" + 9 gewählt werden
+    unsigned char* messageStart; //Pointer auf den Start der Nachricht im transmitBuffer
+
+    fifo_init(&fifo,buffer,sizeof(buffer));
+
+    smp.buffer = &fifo;
+    smp.frameReadyCallback = smp_frameReady;
+    smp.rogueFrameCallback = 0;
+
+    SMP_Init(&smp);
+
+    const char message[] = "Teststring";
+
+    frameLength = SMP_Send((const byte*)message,sizeof(message),transmitBuffer,sizeof(transmitBuffer), &messageStart);
+
+    SMP_RecieveInBytes(messageStart,frameLength,&smp);
 }
 
