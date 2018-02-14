@@ -19,7 +19,9 @@ LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = L
     _parser = new ATCmdParser(_serial);
     _parser->debug_on( debug );
     _parser->set_delimiter( "\r\n" );
+    _parser->set_timeout(2000);
 
+    // debug == DEBUG_ON ? ths.debug
     /* Hard reset */
     _resetPin->write(0);
     wait_ms(1);
@@ -166,8 +168,14 @@ int LoraRadio::sendBytes(char *data, int len){
     }
     _parser->send(txdat);
 
+    // OK
     i = readLine(&ret);
     printf("lora return len: %d, msg: %s\n",i, ret);
+    
+    // wait for the radio to transmit data
+    wait(1);
+
+    // RADIO TX OK
     i = readLine(&ret);
     printf("lora return len: %d, msg: %s\n",i, ret);
 
@@ -179,7 +187,13 @@ int LoraRadio::readLine(char **data){
     static char msg[BUFFLEN];
     int i = 0;
     while(i<(BUFFLEN-1)){
-        msg[i] = _parser->getc();
+        int ret = _parser->getc();
+        if(ret == -1){
+            // timeout occured
+            break;
+        }
+        msg[i] = (char) ret;
+        
         if(msg[i] == '\n'){
             break;
         }
@@ -259,5 +273,43 @@ void RadioSMPTask()
     frameLength = SMP_Send((const byte*)message,sizeof(message),transmitBuffer,sizeof(transmitBuffer), &messageStart);
 
     SMP_RecieveInBytes(messageStart,frameLength,&smp);
+}
+
+
+CircularBuffer<char, BUF_SIZE> RadioTxBuf;
+CircularBuffer<char, BUF_SIZE> RadioRxBuf;
+
+void radioTransceiveTask(){
+    char data[256] = {0};
+    LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, RADIO_RESET, LORA_BAUD, DEBUG_ON);
+
+    while(1){
+        // if databuf not empty -> transmit
+        int i = 0;
+        while(RadioTxBuf.empty() == false){
+            RadioTxBuf.pop(data[i]);
+            i++;
+            if(i >= 127) // 127 bytes -> 254 hex values < max 255
+                break;
+        }
+
+        if(i > 0){
+            radio.sendBytes(data,i);
+            // back to start to transmit remaining data
+            continue;
+        }
+
+        // if nothing to transmit, receive data
+        char *ret;
+        printf("\t\t readline()\n");
+        int len = radio.readLine(&ret);
+        for(int i = 0; i<len; i++){
+            RadioRxBuf.push(ret[i]);
+            printf("\t\t rxbuffer.push(): %c\n", ret[i]);
+        }
+        
+
+        wait(0.05);
+    }
 }
 

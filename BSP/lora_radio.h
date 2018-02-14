@@ -11,7 +11,12 @@
 #define DEBUG_ON 1
 #define DEBUG_OFF 0
 
+#define BUF_SIZE 1024
+
 void RadioTask();
+extern CircularBuffer<char, BUF_SIZE> RadioTxBuf;
+extern CircularBuffer<char, BUF_SIZE> RadioRxBuf;
+void radioTransceiveTask();
 
 class LoraRadio{
 private:
@@ -22,6 +27,8 @@ private:
     int day, year, hour, min, sec;
     char month[4];
     int u_vdd[4]; // RN2483 VDD in [mV]
+    bool debug;
+
 
 public: 
     LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud, int debug);
@@ -32,6 +39,7 @@ public:
     int sendBytes(char *data, int len);
     int readLine(char **data);
     void sendtest();
+
 
 private:
     int getFwVersion();
