@@ -47,7 +47,7 @@
                 "preLaunchTask": "make.exe",
                 "MIMode": "gdb",
                 
-                "MIDebuggerPath": "C:\\Program Files (x86)\\GNU Tools ARM Embedded\\5.4 2016q3\\bin\\arm-none-eabi-gdb.exe", //"C:\\Program Files (x86)\\GNU Tools ARM Embedded\\7 2017-q4-major\\bin\\arm-none-eabi-gdb.exe",
+                "MIDebuggerPath": "C:\\Program Files (x86)\\GNU Tools ARM Embedded\\7 2017-q4-major\\bin\\arm-none-eabi-gdb.exe", //"C:\\Program Files (x86)\\GNU Tools ARM Embedded\\7 2017-q4-major\\bin\\arm-none-eabi-gdb.exe",
                 //"debugServerPath": "C:\\OpenOCD\\0.10.0-6-20180112-1448\\bin\\openocd.exe",
                 "setupCommands": [
                     { "text": "-environment-cd ${workspaceRoot}\\BUILD" },

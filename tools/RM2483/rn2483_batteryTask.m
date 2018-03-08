@@ -19,7 +19,7 @@ if isempty(newobjs) == 0
 end
 
  % Open serial port
-s = serial('COM8');    % Please enter your serial port name here
+s = serial('COM5');    % Please enter your serial port name here
 set(s,'BaudRate',57600,'Terminator','CR/LF');
 fopen(s);
 

@@ -11,9 +11,10 @@
 #include <stdlib.h>
 #include "libsmp.h"
 #include "libfifo.h"
+#include <cstddef>
 
 
-LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = LORA_BAUD, int debug = DEBUG_OFF){
+LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = LORA_BAUD, int debug = DEBUG_OFF, signed char (*rxCallback)(fifo_t* buffer)=NULL){
     _resetPin = new DigitalOut(PinNRST);
     _serial = new UARTSerial(PinTX,PinRX,baud);
     _parser = new ATCmdParser(_serial);
@@ -95,8 +96,35 @@ LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = L
     readLine(&ret);
     if(debug) printf("%s\n",ret);
 
-    wait_ms(10);
+    // SMP
+    smp_frameReady = rxCallback;
+    fifo_init(&fifo,buffer,sizeof(buffer));
+    smp.buffer = &fifo;
+    smp.frameReadyCallback = smp_frameReady;
+    smp.rogueFrameCallback = 0;
+    SMP_Init(&smp);
+
+    wait_ms(10);    
 }
+
+
+int LoraRadio::write(char *data, int len){
+    uint32_t txlen = SMP_Send((unsigned char*)data,len,transmitBuffer,sizeof(transmitBuffer), &messageStart);
+    while(txlen>0){
+        if(txlen >= TX_MAX){
+            sendBytes(messageStart,TX_MAX);
+            txlen -= TX_MAX;
+            messageStart += TX_MAX;
+        }
+        else{
+            // send remaining data
+            sendBytes(messageStart,txlen);
+            txlen -= txlen; // break;
+        }
+    }
+    return SUCCESS;
+}
+
 
 int LoraRadio::getFwVersion(){
     _parser->flush();
@@ -150,7 +178,7 @@ int LoraRadio::getVDD(){
 }
 
 
-int LoraRadio::sendBytes(char *data, int len){
+int LoraRadio::sendBytes(unsigned char *data, int len){
     char *ret;
     int i = 0;
     char txdat[10+2*255] = {0}; // "radio tx <payload 64 bytes>\0";
@@ -233,7 +261,7 @@ void RadioTask(){
 
     while(1){
         wait(2.0);
-        radio.sendBytes(msg,strlen(msg));
+        radio.sendBytes((unsigned char*)msg,strlen(msg));
        // radio.sendtest();
     } 
 }
@@ -276,40 +304,5 @@ void RadioSMPTask()
 }
 
 
-CircularBuffer<char, BUF_SIZE> RadioTxBuf;
-CircularBuffer<char, BUF_SIZE> RadioRxBuf;
 
-void radioTransceiveTask(){
-    char data[256] = {0};
-    LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, RADIO_RESET, LORA_BAUD, DEBUG_ON);
-
-    while(1){
-        // if databuf not empty -> transmit
-        int i = 0;
-        while(RadioTxBuf.empty() == false){
-            RadioTxBuf.pop(data[i]);
-            i++;
-            if(i >= 127) // 127 bytes -> 254 hex values < max 255
-                break;
-        }
-
-        if(i > 0){
-            radio.sendBytes(data,i);
-            // back to start to transmit remaining data
-            continue;
-        }
-
-        // if nothing to transmit, receive data
-        char *ret;
-        printf("\t\t readline()\n");
-        int len = radio.readLine(&ret);
-        for(int i = 0; i<len; i++){
-            RadioRxBuf.push(ret[i]);
-            printf("\t\t rxbuffer.push(): %c\n", ret[i]);
-        }
-        
-
-        wait(0.05);
-    }
-}
 
