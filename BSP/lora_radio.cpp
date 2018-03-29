@@ -16,19 +16,28 @@
 
 LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = LORA_BAUD, int debug = DEBUG_OFF, signed char (*rxCallback)(fifo_t* buffer)=NULL){
     _resetPin = new DigitalOut(PinNRST);
+    /* Hard reset */
+    _resetPin->write(0);
+    wait_ms(10);
+    _resetPin->write(1);
+    wait_ms(10);
+    /* Hard break condition */
+    DigitalOut TX(PinTX);
+    TX = 0;
+    wait_ms(100);
+
+
     _serial = new UARTSerial(PinTX,PinRX,baud);
     _parser = new ATCmdParser(_serial);
     _parser->debug_on( debug );
     _parser->set_delimiter( "\r\n" );
     _parser->set_timeout(2000);
 
-    // debug == DEBUG_ON ? ths.debug
-    /* Hard reset */
-    _resetPin->write(0);
-    wait_ms(1);
-    _resetPin->write(1);
-    wait_ms(5);
-     
+    // auto baud detection
+    char bauddetectcmd = 0x55;
+     _serial->write(&bauddetectcmd,1);
+    wait_ms(10);
+    
     char *ret;
     /* radio config */
     //_serial->send_break();

@@ -13,12 +13,12 @@ void init();
 void BatteryTaskRadio();
 void radioTransceiveTask();
 
-Thread LEDThread;
-Thread SysPrintThread;
-Thread RadioThread;
-Thread LEDdriverThread;
-Thread BatteryThread;
-Thread WatchdogThread;
+Thread LEDThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDThread");
+Thread SysPrintThread(osPriorityNormal, OS_STACK_SIZE,NULL,"SysPrintThread");
+Thread RadioThread(osPriorityNormal, 8*1024,NULL,"RadioThread");
+Thread LEDdriverThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDdriverThread");
+Thread BatteryThread(osPriorityNormal, OS_STACK_SIZE,NULL,"BatteryThread");
+Thread WatchdogThread(osPriorityNormal, OS_STACK_SIZE,NULL,"WatchdogThread");
 
 
 signed char rxCallback(fifo_t *buffer){
@@ -28,7 +28,7 @@ signed char rxCallback(fifo_t *buffer){
 
 void BatteryTaskRadio(){
     BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
-    LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, RADIO_RESET, LORA_BAUD, DEBUG_OFF,NULL);
+    LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, RADIO_RESET, LORA_BAUD, DEBUG_ON,NULL);
 
     char msg[1024] = {0};
     while(1){
