@@ -112,24 +112,22 @@ float BatteryManager::getBatRes(){
     return (float)bsr * _R_SNSB / 500.0 * (float)_cellcount;
 }
 
-int BatteryManager::setIchargeRel(float Icharge_rel){
-    int16_t icharge_target = 0;
-    if(Icharge_rel >= 0.0 && Icharge_rel <= 1.0){
-        icharge_target = (uint16_t)(32.0 * Icharge_rel);
+int BatteryManager::setIcharge(float Icharge){
+    if(Icharge > 0.0 && Icharge <= 32.0*0.001/_R_SNSB){
+        uint16_t icharge_target = uint16_t(Icharge*_R_SNSB/0.001 -1);
         this->write(ICHARGE_TARGET,icharge_target);
         return SUCCESS;
     }
-    else{
+    else
         return ERROR;
-    }
 }
 
-float BatteryManager::getIchargeRel(){
-    float IchargeRel = 0.0;
+float BatteryManager::getIcharge(){
+    float Icharge = 0.0;
     int16_t icharge_target;
     this->read(ICHARGE_TARGET, &icharge_target);
-    IchargeRel = (float)icharge_target / 32.0;
-    return IchargeRel;
+    Icharge = (float)(icharge_target+1)*0.001/_R_SNSB;
+    return Icharge;
 }
 
 
@@ -204,7 +202,7 @@ int BatteryManager::setUVCL(float Uin){
 
 int BatteryManager::setChargerParameter(){
     // ICHARGE_TARGET;
-    setIchargeRel(0.25);
+    setIcharge(0.5);
     // VABSORB_DELTA;
     // MAX_ABSORB_TIME;
     // VCHARGE_SETTING;
@@ -305,12 +303,12 @@ void BatteryTask(){
 void BatteryTask2(){
     BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
     
-    bat.setIchargeRel(0.5);
-    printf("\n\nIchargeRel: %f\n\n",bat.getIchargeRel());
+    bat.setIcharge(0.5);
+    printf("\n\nIchargeRel: %f\n\n",bat.getIcharge());
 
     while(true){
-        bat.setIchargeRel(0.5);
-        printf("\n\nIchargeRel: %f\n\n",bat.getIchargeRel());
+        bat.setIcharge(0.5);
+        printf("\n\nIchargeRel: %f\n\n",bat.getIcharge());
 
         printf("Tbat: %f\t", bat.getBatTemp());
         printf("Ubat: %f\t",bat.getUBat());

@@ -85,8 +85,8 @@ public:
     float getIin();
     float getTdie();
     float getBatRes();
-    int setIchargeRel(float Icharge_rel);
-    float getIchargeRel();
+    int setIcharge(float Icharge);
+    float getIcharge();
     int setVcharge(float U);
     int setMaxCVTime(float hours);
     int setMaxChargeTime(float hours);
