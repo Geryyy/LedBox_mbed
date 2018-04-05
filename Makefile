@@ -47,7 +47,7 @@ PROJECT := LedBox_mbed
 # Objects and Paths
 
 OBJECTS += ./libsmp/c/libsmp.o
-OBJECTS += ./libsmp/libfifo/c/libfifo.o
+OBJECTS += ./libfifo/c/libfifo.o
 OBJECTS += ./BSP/eeprom.o
 OBJECTS += ./BSP/DeviceStats.o
 OBJECTS += ./BSP/Watchdog.o
@@ -356,7 +356,7 @@ OBJECTS += ./mbed-os/targets/TARGET_STM/us_ticker_32b.o
 INCLUDE_PATHS += -I../
 INCLUDE_PATHS += -I../.
 INCLUDE_PATHS += -I.././libsmp/c
-INCLUDE_PATHS += -I.././libsmp/libfifo/c
+INCLUDE_PATHS += -I.././libfifo/c
 INCLUDE_PATHS += -I.././BSP
 INCLUDE_PATHS += -I.././Scripts
 INCLUDE_PATHS += -I.././application
