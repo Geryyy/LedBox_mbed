@@ -15,7 +15,7 @@
 
 
 LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = LORA_BAUD, int debug = DEBUG_OFF, signed char (*rxCallback)(fifo_t* buffer)=NULL){
-    _resetPin = new DigitalOut(PinNRST);
+    _resetPin = new DigitalInOut(PinNRST, PIN_OUTPUT, OpenDrain, 1);
     /* Hard reset */
     _resetPin->write(0);
     wait_ms(10);

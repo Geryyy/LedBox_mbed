@@ -27,7 +27,7 @@ class LoraRadio{
 private:
     UARTSerial *_serial;
     ATCmdParser *_parser;
-    DigitalOut *_resetPin;
+    DigitalInOut *_resetPin;
     int fw[3];
     int day, year, hour, min, sec;
     char month[4];
