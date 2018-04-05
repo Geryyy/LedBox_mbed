@@ -87,7 +87,13 @@ public:
     float getBatRes();
     int setIchargeRel(float Icharge_rel);
     float getIchargeRel();
-    int updateChargerSettings();
+    int setVcharge(float U);
+    int setMaxCVTime(float hours);
+    int setMaxChargeTime(float hours);
+    int setLIFEPO4RechargeThreshold(float U);
+    int setIinLimit(float Iin);
+    int setUVCL(float Uin);
+    int setChargerParameter();
     int setInputThresholds();
     uint16_t getChargerStatus();
     uint16_t getChargerState();

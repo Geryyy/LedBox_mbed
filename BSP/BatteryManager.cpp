@@ -24,6 +24,9 @@ BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAl
     _t->start(callback(_queue, &EventQueue::dispatch_forever));
     _Alert->fall(_queue->event(BatteryManager::_serviceSMBAlert));
     // _Alert->fall(callback(this, &BatteryManager::serviceSMBAlert));
+
+    setChargerParameter();
+    setInputThresholds();
 }
 
 
@@ -130,23 +133,100 @@ float BatteryManager::getIchargeRel(){
 }
 
 
-int BatteryManager::updateChargerSettings(){
+int BatteryManager::setVcharge(float U){
+    if(U>3.4125 && U<4.2){
+        int16_t vcharge_setting = int16_t((U-3.4125)*80.0);
+        vcharge_setting &= 0x1F; // Bits(4:0)
+        this->write(VCHARGE_SETTING,vcharge_setting);
+        return SUCCESS;
+    }
+    else
+        return ERROR;
+}
+
+int BatteryManager::setMaxCVTime(float hours){
+    if(hours > 0.0 && hours < 18.0){
+        uint16_t max_cv_time = uint16_t(hours*3600.0);
+        this->write(MAX_CV_TIME, max_cv_time);
+        return SUCCESS;
+    }
+    else
+        return ERROR;
+}
+
+int BatteryManager::setMaxChargeTime(float hours){
+    if(hours > 0.0 && hours < 18.0){
+        uint16_t max_charge_time = uint16_t(hours*3600.0);
+        this->write(MAX_CHARGE_TIME, max_charge_time);
+        return SUCCESS;
+    }
+    else
+        return ERROR;
+}
+
+int BatteryManager::setLIFEPO4RechargeThreshold(float U){
+    if(U > 0 && U < 4.2){
+        int16_t lifepo45_recharge_theshold = int16_t(U/0.000192264);
+        this->write(LIFEP04_RECHARGE_THRESHOLD, lifepo45_recharge_theshold);
+        return SUCCESS;
+    }
+    else
+        return ERROR;
+}
+
+
+int BatteryManager::setIinLimit(float Iin){
+    if(Iin > 0 && Iin <= 3.2){
+        uint16_t iin_limit_setting = uint16_t(Iin*0.0005/_R_SNSI);
+        iin_limit_setting &= 0x3F;
+        this->write(IIN_LIMIT_SETTING, iin_limit_setting);
+        return SUCCESS;
+    }
+    else
+        return ERROR;
+}
+
+
+int BatteryManager::setUVCL(float Uin){
+    if(Uin > 0.0 && Uin <= 36.0){
+        float R2B = 294.0; // kohm
+        float R4B = 10.0; // kohm
+        float Uvcl_pin = Uin * R4B / (R2B + R4B);
+        uint16_t vin_uvcl_setting = uint16_t(Uvcl_pin/0.0046875 - 1);
+        vin_uvcl_setting &= 0xFF;
+        this->write(VIN_UVCL_SETTING, vin_uvcl_setting);
+        return SUCCESS;
+    }
+    else
+        return ERROR;
+}
+
+
+int BatteryManager::setChargerParameter(){
     // ICHARGE_TARGET;
+    setIchargeRel(0.25);
     // VABSORB_DELTA;
     // MAX_ABSORB_TIME;
     // VCHARGE_SETTING;
+    setVcharge(3.6); // max ladespannung 3.6V
     // MAX_CV_TIME;
+    setMaxCVTime(1.0); // max 1h CV charge
     // en_jeita;
     // en_c_over_x_term;
     // C_OVER_X_THRESHOLD;
     // MAX_CHARGE_TIME;
+    setMaxChargeTime(4);
     // LIFEPO4_RECHARGE_THRESHOLD;
+    setLIFEPO4RechargeThreshold(3.2);
+
     return SUCCESS;
 }
 
 int BatteryManager::setInputThresholds(){
     // IIN_LIMIT_SETTING;
+    setIinLimit(2.0); // 2A max Eingangsstrom
     // VIN_UVCL_SETTING;
+    setUVCL(8.0); // Uin min 8V
     return SUCCESS;
 }
 
