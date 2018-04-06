@@ -19,12 +19,46 @@ Thread RadioThread(osPriorityNormal, 8*1024,NULL,"RadioThread");
 Thread LEDdriverThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDdriverThread");
 Thread BatteryThread(osPriorityNormal, OS_STACK_SIZE,NULL,"BatteryThread");
 Thread WatchdogThread(osPriorityNormal, OS_STACK_SIZE,NULL,"WatchdogThread");
+Thread LoraDevThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LoraDevThread");
 
 
 signed char rxCallback(fifo_t *buffer){
     return 0;
 }
 /*** TASKS ***/
+
+void LoraDevTask(){
+    DigitalInOut _reset = DigitalInOut(RADIO_RESET, PIN_OUTPUT, OpenDrain, 1);
+    Serial _radio(RADIO_TX, RADIO_RX);
+    // generate reset
+    // _reset.write(0);
+    // wait_ms(10);
+    // _reset.write(1);
+    // wait_ms(500);
+
+    // send (long) break 
+    _radio.baud(9600);
+    _radio.send_break();
+    // auto baud detection
+    _radio.baud(LORA_BAUD); // richtige baudrate setzen
+    _radio.putc(0x55);
+    wait_ms(1);
+
+    // _radio.printf("sys reset \r\n");
+    wait_ms(50);
+    _radio.baud(LORA_BAUD);
+    _radio.printf("sys get ver\r\n");
+    // wait_ms(10);
+    // _radio.printf("radio set freq 868100000 \r\n");
+    // _radio.printf("radio set pwr 14 \r\n");
+    // _radio.printf("radio set sf sf12 \r\n");
+    // _radio.printf("radio set afcbw 125 \r\n");
+    // _radio.printf("radio set rxbw 250 \r\n");
+
+    while(1){
+        wait(1);
+    }
+}
 
 void BatteryTaskRadio(){
     BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
@@ -101,8 +135,8 @@ int main()
     WatchdogThread.start(WatchdogTask);
     LEDThread.start(LEDTask);
     //SysPrintThread.start(PrintSystemInformation);
-    RadioThread.start(BatteryTaskRadio);
-    
+    // RadioThread.start(BatteryTaskRadio);
+    LoraDevThread.start(LoraDevTask);
     //RadioThread.start(radioTransceiveTask); // transmit with ringbuffer
 
     // LEDdriverThread.start(LEDdriverTask);
