@@ -33,12 +33,12 @@ LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = L
     _parser = new ATCmdParser(_serial);
     _parser->debug_on( debug );
     _parser->set_delimiter( "\r\n" );
-    _parser->set_timeout(500);
+    _parser->set_timeout(2000);
 
     // // auto baud detection
-    // char bauddetectcmd = 0x55;
-    //  _serial->write(&bauddetectcmd,1);
-    // wait_ms(1);
+    char bauddetectcmd = 0x55;
+     _serial->write(&bauddetectcmd,1);
+    wait_ms(1);
     
     char *ret;
     /* radio config */
