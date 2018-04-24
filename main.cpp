@@ -29,61 +29,27 @@ signed char rxCallback(fifo_t *buffer){
 
 void LoraDevTask(){
     DigitalInOut _reset = DigitalInOut(RADIO_RESET, PIN_OUTPUT, OpenDrain, 1);
-    Serial _radio(RADIO_TX, RADIO_RX);
+    Serial _radio(RADIO_TX, RADIO_RX, LORA_BAUD);
 
-    // generate reset
-    // wait_ms(200);
-    // _reset.write(0);
-    // wait_ms(200);
-    // _reset.write(1);
-    // wait_ms(200);
-
-    // send (long) break 
-    _radio.baud(9600);
-    _radio.send_break();
-    // auto baud detection
-    _radio.baud(LORA_BAUD); // richtige baudrate setzen
-    _radio.putc(0x55);
-    wait_ms(1);
-
-    // _radio.printf("sys reset \r\n");
-    wait_ms(50);
-    _radio.baud(LORA_BAUD);
-    // _radio.printf("sys reset\r\n");
     _radio.printf("sys get ver\r\n");
     wait_ms(10);
-    // _radio.printf("radio set freq 868100000 \r\n");
-    // _radio.printf("radio set pwr 14 \r\n");
-    // _radio.printf("radio set sf sf12 \r\n");
-    // _radio.printf("radio set afcbw 125 \r\n");
-    // _radio.printf("radio set rxbw 250 \r\n");
+
+    _reset.write(0);
+    wait_ms(100);
+    _reset.write(1);
+    wait_ms(200);
+    _radio.printf("U\r\n");
+    wait_ms(10);
+    _radio.printf("sys get ver\r\n");
+    // _radio.printf("sys reset\r\n0");
 
     while(1){
+
+
         wait(1);
     }
 }
 
-void BatteryTaskRadio(){
-    BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
-    LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, RADIO_RESET, LORA_BAUD, DEBUG_ON,NULL);
-
-    char msg[1024] = {0};
-    while(1){
-        sprintf(msg, "Tbat:\t%4.1f C\nUbat:\t%4.2f V\nIbat:\t%4.3f A\nUin:\t%4.2f V\nUsys:\t%4.2f V\nIin:\t%4.3f A\nTdie:\t%4.1f C\n\r",\
-            bat.getBatTemp(), \
-            bat.getUBat(), \
-            bat.getIBat(),
-            bat.getUin(),\
-            bat.getUsys(),\
-            bat.getIin(),\
-            bat.getTdie() );
-        radio.write(msg,strlen(msg));
-        bat.printStatus();
-        printf("System Status:\n----------------------\n");
-        printf("%s\n",msg);
-        wait(2);
-    } 
-}
 
 
 #define BUF_SIZE 1024
@@ -134,37 +100,14 @@ int main()
 {   
     init();
     
-    //Watchdog Lessie = Watchdog(1);
     WatchdogThread.start(WatchdogTask);
     LEDThread.start(LEDTask);
-    //SysPrintThread.start(PrintSystemInformation);
-    // RadioThread.start(BatteryTaskRadio);
+
     LoraDevThread.start(LoraDevTask);
-    //RadioThread.start(radioTransceiveTask); // transmit with ringbuffer
 
-    // LEDdriverThread.start(LEDdriverTask);
-    // BatteryThread.start(BatteryTask2);
-
-    //printf("Deep sleep allowed: %i\r\n", sleep_manager_can_deep_sleep());
-    // char msg[1024] = {0};
-    // BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
     while(true) {
         wait(5);
         
-        // sprintf(msg, "Tbat:\t%4.1f C\nUbat:\t%4.2f V\nIbat:\t%4.3f A\nUin:\t%4.2f V\nUsys:\t%4.2f V\nIin:\t%4.3f A\nTdie:\t%4.1f C\n\r",\
-        //     bat.getBatTemp(), \
-        //     bat.getUBat(), \
-        //     bat.getIBat(),
-        //     bat.getUin(),\
-        //     bat.getUsys(),\
-        //     bat.getIin(),\
-        //     bat.getTdie() );
-        
-        // for(uint16_t i = 0; i<strlen(msg); i++){
-        //     RadioTxBuf.push(msg[i]);
-        // }
-
-        // printf("TX buffer size: %ld\nRX buffer size: %ld\n",RadioTxBuf.size(), RadioRxBuf.size());
 
 
     }
