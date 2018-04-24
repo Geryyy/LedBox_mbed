@@ -16,34 +16,37 @@
 
 LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = LORA_BAUD, int debug = DEBUG_OFF, signed char (*rxCallback)(fifo_t* buffer)=NULL){
     _resetPin = new DigitalInOut(PinNRST, PIN_OUTPUT, OpenDrain, 1);
-    /* Hard reset */
-    _resetPin->write(0);
-    wait_ms(1);
-    _resetPin->write(1);
-    wait_ms(1);
-    /* Hard break condition */
-    DigitalOut TX(PinTX);
-    TX = 0;
-    wait_ms(1);
+    // /* Hard reset */
+    // _resetPin->write(0);
+    // wait_ms(10);
+    // _resetPin->write(1);
+    // wait_ms(200);
+
+
+    // /* Hard break condition */
+    // DigitalOut TX(PinTX);
+    // TX = 0;
+    // wait_ms(1);
 
 
     _serial = new UARTSerial(PinTX,PinRX,baud);
     _parser = new ATCmdParser(_serial);
     _parser->debug_on( debug );
     _parser->set_delimiter( "\r\n" );
-    _parser->set_timeout(100);
+    _parser->set_timeout(500);
 
-    // auto baud detection
-    char bauddetectcmd = 0x55;
-     _serial->write(&bauddetectcmd,1);
-    wait_ms(1);
+    // // auto baud detection
+    // char bauddetectcmd = 0x55;
+    //  _serial->write(&bauddetectcmd,1);
+    // wait_ms(1);
     
     char *ret;
     /* radio config */
     //_serial->send_break();
-    _parser->send("sys reset");
-    readLine(&ret);  
-    if(debug) printf("%s\n",ret); 
+
+    // _parser->send("sys reset");
+    // readLine(&ret);  
+    // if(debug) printf("%s\n",ret); 
 
     _parser->send("radio set mod lora");
     readLine(&ret);
