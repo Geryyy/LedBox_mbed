@@ -101,7 +101,7 @@ void radioTransceiveTask(){
         while(RadioTxBuf.empty() == false){
             RadioTxBuf.pop(data[i]);
             i++;
-            if(i >= 50) // 50 bytes -> 100 hex values < max 255
+            if(i >= 100) // 100 bytes -> 200 hex values < max 255
                 break;
         }
 
@@ -146,7 +146,7 @@ int main()
     char msg[1024] = {0};
     BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
     while(true) {
-        wait(5);
+        
         
         sprintf(msg, "Tbat:\t%4.1f C\nUbat:\t%4.2f V\nIbat:\t%4.3f A\nUin:\t%4.2f V\nUsys:\t%4.2f V\nIin:\t%4.3f A\nTdie:\t%4.1f C\n\r",\
             bat.getBatTemp(), \
@@ -157,12 +157,12 @@ int main()
             bat.getIin(),\
             bat.getTdie() );
         
-        for(uint16_t i = 0; i<strlen(msg); i++){
+        for(uint16_t i = 0; i<4; i++){ // for(uint16_t i = 0; i<strlen(msg); i++){
             RadioTxBuf.push(msg[i]);
         }
 
         printf("TX buffer size: %ld\nRX buffer size: %ld\n",RadioTxBuf.size(), RadioRxBuf.size());
-
+    wait(5);
 
     }
 }
