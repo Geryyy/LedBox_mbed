@@ -30,11 +30,13 @@ signed char rxCallback(fifo_t *buffer){
 void LoraDevTask(){
     DigitalInOut _reset = DigitalInOut(RADIO_RESET, PIN_OUTPUT, OpenDrain, 1);
     Serial _radio(RADIO_TX, RADIO_RX);
+
     // generate reset
+    // wait_ms(200);
     // _reset.write(0);
-    // wait_ms(10);
+    // wait_ms(200);
     // _reset.write(1);
-    // wait_ms(500);
+    // wait_ms(200);
 
     // send (long) break 
     _radio.baud(9600);
@@ -47,8 +49,9 @@ void LoraDevTask(){
     // _radio.printf("sys reset \r\n");
     wait_ms(50);
     _radio.baud(LORA_BAUD);
+    // _radio.printf("sys reset\r\n");
     _radio.printf("sys get ver\r\n");
-    // wait_ms(10);
+    wait_ms(10);
     // _radio.printf("radio set freq 868100000 \r\n");
     // _radio.printf("radio set pwr 14 \r\n");
     // _radio.printf("radio set sf sf12 \r\n");
