@@ -31,6 +31,7 @@ private:
     int fw[3];
     int day, year, hour, min, sec;
     char month[4];
+    char hweui[16];
     int u_vdd[4]; // RN2483 VDD in [mV]
     bool debug;
     // SMP
@@ -45,10 +46,11 @@ private:
 
 public: 
     LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud, int debug, signed char (*rxCallback)(fifo_t* buffer));
+    
     int write(char *data, int len);
     void printFwVersion();
     void setSleep(int ms);
-    int reset();
+  
     int getVDD();
     int sendBytes(unsigned char *data, int len);
     int readLine(char **data);
@@ -57,6 +59,9 @@ public:
 
 private:
     int getFwVersion();
+    bool init(void);
+    bool softreset(void);
+    void hardreset(void);
 };
 
 #endif

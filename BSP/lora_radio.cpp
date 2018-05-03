@@ -16,97 +16,14 @@
 
 LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = LORA_BAUD, int debug = DEBUG_OFF, signed char (*rxCallback)(fifo_t* buffer)=NULL){
     _resetPin = new DigitalInOut(PinNRST, PIN_OUTPUT, OpenDrain, 1);
-    // /* Hard reset */
-    // _resetPin->write(0);
-    // wait_ms(10);
-    // _resetPin->write(1);
-    // wait_ms(200);
-
-
-    // /* Hard break condition */
-    // DigitalOut TX(PinTX);
-    // TX = 0;
-    // wait_ms(1);
-
-
     _serial = new UARTSerial(PinTX,PinRX,baud);
     _parser = new ATCmdParser(_serial);
     _parser->debug_on( debug );
     _parser->set_delimiter( "\r\n" );
     _parser->set_timeout(2000);
 
-    // // auto baud detection
-    // char bauddetectcmd = 0x55;
-    //  _serial->write(&bauddetectcmd,1);
-    // wait_ms(1);
-    
-    char *ret;
-    /* radio config */
-    //_serial->send_break();
-
-    // _parser->send("sys reset");
-    // readLine(&ret);  
-    // if(debug) printf("%s\n",ret); 
-
-    _parser->send("radio set mod lora");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("radio set freq 868100000");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("radio set pwr 14");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("radio set sf sf12");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("radio set afcbw 125");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("radio set rxbw 250");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("radio set fdev 5000");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("radio set prlen 8");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("radio set crc on");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("radio set cr 4/8");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("radio set wdt 5500");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("radio set sync 12");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("radio set bw 250");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("sys get hweui");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
-
-    _parser->send("mac pause");
-    readLine(&ret);
-    if(debug) printf("%s\n",ret);
+    hardreset();
+    init();
 
     // SMP
     smp_frameReady = rxCallback;
@@ -116,8 +33,56 @@ LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = L
     smp.rogueFrameCallback = 0;
     SMP_Init(&smp);
 
-    wait_ms(10);    
+    // wait_ms(10);    
 }
+
+bool LoraRadio::init(void){
+    bool success = _parser->send("radio set mod lora")
+    && _parser->recv("ok")
+    && _parser->send("radio set freq 868100000")
+    && _parser->recv("ok")
+    && _parser->send("radio set pwr 14")
+    && _parser->recv("ok")
+    && _parser->send("radio set sf sf12")
+    && _parser->recv("ok")
+    && _parser->send("radio set afcbw 125")
+    && _parser->recv("ok")
+    && _parser->send("radio set rxbw 250")
+    && _parser->recv("ok")
+    && _parser->send("radio set fdev 5000")
+    && _parser->recv("ok")
+    && _parser->send("radio set prlen 8")
+    && _parser->recv("ok")
+    && _parser->send("radio set crc on")
+    && _parser->recv("ok")
+    && _parser->send("radio set cr 4/8")
+    && _parser->recv("ok")
+    && _parser->send("radio set wdt 5500")
+    && _parser->recv("ok")
+    && _parser->send("radio set sync 12")
+    && _parser->recv("ok")
+    && _parser->send("radio set bw 250")
+    && _parser->recv("ok")
+    && _parser->send("sys get hweui")
+    && _parser->recv("ok")
+    && _parser->recv("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",&hweui[15],&hweui[14],&hweui[13],&hweui[12],&hweui[11],&hweui[10],&hweui[9],&hweui[8],&hweui[7],&hweui[6],&hweui[5],&hweui[4],&hweui[3],&hweui[2],&hweui[1],&hweui[0])
+    && _parser->send("mac pause");
+    return success;
+}
+
+bool LoraRadio::softreset(void){
+    bool success = _parser->send("sys reset")
+    && _parser->recv("RN2483 %d.%d.%d %s %d %d %d:%d:%d", &fw[0], &fw[1], &fw[2], month, &day, &year, &hour, &min, &sec);
+    return success;
+} 
+
+void LoraRadio::hardreset(void){
+    /* Hard reset */
+    _resetPin->write(0);
+    wait_ms(10);
+    _resetPin->write(1);
+    wait_ms(200);
+} 
 
 
 int LoraRadio::write(char *data, int len){
@@ -136,7 +101,6 @@ int LoraRadio::write(char *data, int len){
     }
     return SUCCESS;
 }
-
 
 int LoraRadio::getFwVersion(){
     _parser->flush();
@@ -166,16 +130,6 @@ void LoraRadio::setSleep(int ms){
     }
 }
 
-int LoraRadio::reset(){
-    _parser->flush();
-    _parser->send("sys reset");
-    if(_parser->recv("RN2483 %d.%d.%d %s %d %d %d:%d:%d", &fw[0], &fw[1], &fw[2], month, &day, &year, &hour, &min, &sec)) {
-        return SUCCESS;
-    } else { 
-        return ERROR;
-    }
-}
-
 int LoraRadio::getVDD(){
     _parser->flush();
     _parser->send("sys get vdd");
@@ -188,6 +142,7 @@ int LoraRadio::getVDD(){
         return ERROR;
     }
 }
+
 
 
 int LoraRadio::sendBytes(unsigned char *data, int len){
