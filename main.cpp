@@ -94,6 +94,7 @@ void radioTransceiveTask(){
     char data[256] = {0};
     LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, RADIO_RESET, LORA_BAUD, DEBUG_ON, rxCallback);
 
+    wait(3);
 
     while(1){
         // if databuf not empty -> transmit

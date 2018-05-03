@@ -31,7 +31,8 @@ private:
     int fw[3];
     int day, year, hour, min, sec;
     char month[4];
-    char hweui[16];
+    char hweui[18];
+    long macpause;
     int u_vdd[4]; // RN2483 VDD in [mV]
     bool debug;
     // SMP

@@ -22,8 +22,15 @@ LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = L
     _parser->set_delimiter( "\r\n" );
     _parser->set_timeout(2000);
 
+    this->debug = debug;
     hardreset();
-    init();
+
+    if(init()==false){
+        fprintf(stderr,"RN2483 init failed!\n");
+    }
+    else{
+        fprintf(stderr,"RN2483 init OK!\n");
+    }
 
     // SMP
     smp_frameReady = rxCallback;
@@ -33,7 +40,8 @@ LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = L
     smp.rogueFrameCallback = 0;
     SMP_Init(&smp);
 
-    // wait_ms(10);    
+    // wait for printf to transmit remaining data
+    wait_ms(10);    
 }
 
 bool LoraRadio::init(void){
@@ -64,9 +72,20 @@ bool LoraRadio::init(void){
     && _parser->send("radio set bw 250")
     && _parser->recv("ok")
     && _parser->send("sys get hweui")
-    && _parser->recv("ok")
-    && _parser->recv("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",&hweui[15],&hweui[14],&hweui[13],&hweui[12],&hweui[11],&hweui[10],&hweui[9],&hweui[8],&hweui[7],&hweui[6],&hweui[5],&hweui[4],&hweui[3],&hweui[2],&hweui[1],&hweui[0])
+    && (_parser->read(hweui,18) != -1)
     && _parser->send("mac pause");
+
+    char *pausemsg;
+    readLine(&pausemsg);
+
+    if(debug){
+        char msg[19]={0};
+        memcpy(msg,hweui,18);
+        msg[18] = '\0';
+        printf("hweui: %s\n",msg);
+        printf("mac pause: %s\n",pausemsg);
+
+    }
     return success;
 }
 
