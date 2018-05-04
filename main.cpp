@@ -107,8 +107,9 @@ void radioTransceiveTask(){
         }
 
         if(i > 0){
-            radio.sendBytes((unsigned char*)data, i);
-            // back to start to transmit remaining data
+            // radio.sendBytes((unsigned char*)data, i);
+            radio.write((char*)data, i);
+            // back to start, transmit remaining data
             continue;
         }
 
@@ -149,17 +150,20 @@ int main()
     while(true) {
         
         
-        sprintf(msg, "Tbat:\t%4.1f C\nUbat:\t%4.2f V\nIbat:\t%4.3f A\nUin:\t%4.2f V\nUsys:\t%4.2f V\nIin:\t%4.3f A\nTdie:\t%4.1f C\n\r",\
-            bat.getBatTemp(), \
-            bat.getUBat(), \
-            bat.getIBat(),
-            bat.getUin(),\
-            bat.getUsys(),\
-            bat.getIin(),\
-            bat.getTdie() );
+        // sprintf(msg, "Tbat:\t%4.1f C\nUbat:\t%4.2f V\nIbat:\t%4.3f A\nUin:\t%4.2f V\nUsys:\t%4.2f V\nIin:\t%4.3f A\nTdie:\t%4.1f C\n\r",\
+        //     bat.getBatTemp(), \
+        //     bat.getUBat(), \
+        //     bat.getIBat(),
+        //     bat.getUin(),\
+        //     bat.getUsys(),\
+        //     bat.getIin(),\
+        //     bat.getTdie() );
         
-        for(uint16_t i = 0; i<4; i++){ // for(uint16_t i = 0; i<strlen(msg); i++){
-            RadioTxBuf.push(msg[i]);
+        // for(uint16_t i = 0; i<4; i++){ // for(uint16_t i = 0; i<strlen(msg); i++){
+        //     RadioTxBuf.push(msg[i]);
+        // }
+        for(int i = 0; i<3; i++){
+            RadioTxBuf.push('U');
         }
 
         printf("TX buffer size: %ld\nRX buffer size: %ld\n",RadioTxBuf.size(), RadioRxBuf.size());

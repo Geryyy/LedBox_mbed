@@ -30,18 +30,42 @@ while(1)
     while(s.BytesAvailable==0);pause(0.5);end
     % read data
     rx = char(fread(s,s.BytesAvailable)');
+    
+    % extract actual message from rn2483 reponse "radio_rx <rx_msg>" 
+    splitstr = strsplit(rx,' ');
+    rx_msg = splitstr{2};
+    
     % remove SMP frame
-    smpReceiveBytes(rx,instance); %Send the received bytes to the smp library
+    smpReceiveBytes(rx_msg,instance); %Send the received bytes to the smp library
     % check for received frames in smp library
-    disp(rx);
+    disp(strcat('rx_msg: ', rx_msg));
     if smpMessagesToReceive(instance) == 0 %Check if the smp library has received a valid message
-        error('Data should be correct and therefore the receive counter should be greater than zero');
+        fprintf('Data should be correct and therefore the receive counter should be greater than zero\n');
     end
     [receivedMessage, success] = smpGetNextReceiveMessage(instance); %Get received message from the buffer
     % convert bytes to string
-    str =  bytes2String(receivedMessage);
-    % display
-    fprintf('Received: \n%s\n', str);
-end;
+    if(length(receivedMessage)>0)
+        str =  bytes2String(receivedMessage);
+        % display
+        fprintf('Received: \n%s\n', str);
+    else
+        fprintf('no message received\n');
+    end
+    
+    %% send somethin back 
+    fprintf('\nsend return message: \n');
+    fprintf(s,'radio tx 5555');
+    % wait for response
+    while(s.BytesAvailable==0);pause(0.5);end
+    % read ack response
+    rx = char(fread(s,s.BytesAvailable)');
+    disp(rx);
+    
+%     while(s.BytesAvailable==0);pause(0.5);end
+%     % read ack response
+%     rx = char(fread(s,s.BytesAvailable)');
+%     disp(rx);
+    
+end
 
 closeRadio;

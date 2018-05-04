@@ -125,6 +125,21 @@ void LoraRadio::hardreset(void){
 
 int LoraRadio::write(char *data, int len){
     uint32_t txlen = SMP_Send((unsigned char*)data,len,transmitBuffer,sizeof(transmitBuffer), &messageStart);
+
+    /* in debug mode: print input data pointer and data length in terminal */
+    if(debug){
+        printf("LoraRadio::write(%p, %d)\n",data,len);
+        printf("\tinput data: ");
+        for(int i = 0;i<len;i++){
+            printf("%c",data[i]);
+        }
+        printf("\n\tSMP frame:  ");
+        for(uint32_t i = 0;i<txlen;i++){
+            printf("%.2x",messageStart[i]);
+        }
+        printf("\n\n");
+    }
+
     while(txlen>0){
         if(txlen >= TX_MAX){
             sendBytes(messageStart,TX_MAX);
@@ -185,7 +200,8 @@ int LoraRadio::getVDD(){
 
 int LoraRadio::sendBytes(unsigned char *data, int len){
     char txdat[10+2*255] = {0}; // "radio tx <payload 64 bytes>\0";
-    int hexlen = 2*len; // zwei hex zeichen pro byte
+    const int hexlen = 2*len; // zwei hex zeichen pro byte
+    int msglen = 0;
     int hexlen_max;
     bool success = SUCCESS;
     
@@ -211,9 +227,24 @@ int LoraRadio::sendBytes(unsigned char *data, int len){
     /* generate transmit frame */
     sprintf(txdat, "radio tx ");
     // convert bytes to ascii symbols
-    for(int i = 0; i<(len);i++){
-        sprintf(&txdat[2*i+9], "%.2x", data[i]);
+    for(int i = 0; i<len;i++){
+        sprintf(&txdat[9+2*i], "%.2x", data[i]);
     }
+
+    /* get length of transmit frame */
+    msglen = strlen(txdat);
+
+
+    /* in debug mode: print input data and transmit data in terminal */
+    if(debug){
+        printf("LoraRadio::sendBytes(%p, %d)\n",data,len);
+        printf("\tinput data:\t");
+        for(int i = 0;i<len;i++){
+            printf("%.2x",data[i]);
+        }
+        printf("\n\ttransmit frame:\t%s\n\ttransmit frame length: %d\n\n",txdat,msglen);
+    }
+
     success = success && _parser->send(txdat)
         && _parser->recv("ok\r\n")
         && _parser->recv("radio_tx_ok\r\n");
