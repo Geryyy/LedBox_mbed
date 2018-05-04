@@ -23,6 +23,10 @@ LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = L
     _parser->set_timeout(2000);
 
     this->debug = debug;
+
+    /* set default radio mode to lora; todo: implement fsk */
+    mode = lora;
+
     hardreset();
 
     if(init()==false){
@@ -45,8 +49,21 @@ LoraRadio::LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud = L
 }
 
 bool LoraRadio::init(void){
-    bool success = _parser->send("radio set mod lora")
-    && _parser->recv("ok\r\n")
+    bool success = true;
+
+    switch(mode){
+        case lora:
+            success = success && _parser->send("radio set mod lora");
+            break;
+        case fsk:
+            /* todo */
+            break;
+        default: 
+            /* radio mode not set */
+            success = false;
+    }
+     
+    success = success && _parser->recv("ok\r\n")
     && _parser->send("radio set freq 868100000")
     && _parser->recv("ok\r\n")
     && _parser->send("radio set pwr 14")
@@ -75,9 +92,11 @@ bool LoraRadio::init(void){
     && (_parser->read(hweui,19) != -1)
     && _parser->send("mac pause");
 
+    /* read mac pause return message with readline() to accommodate variable length */
     char *pausemsg;
     readLine(&pausemsg);
 
+    /* print hweui and mac pause length in debug mode */
     if(debug){
         char msg[19]={0};
         memcpy(msg,hweui,18);
@@ -141,7 +160,7 @@ void LoraRadio::printFwVersion(){
 void LoraRadio::setSleep(int ms){
     _parser->flush();
     _parser->send("sys sleep %d",ms);
-    if(_parser->recv("invalid param")){
+    if(_parser->recv("ok\r\n")){
         printf("sleep: success\n");
     }
     else{
@@ -165,35 +184,41 @@ int LoraRadio::getVDD(){
 
 
 int LoraRadio::sendBytes(unsigned char *data, int len){
-    char *ret;
-    int i = 0;
     char txdat[10+2*255] = {0}; // "radio tx <payload 64 bytes>\0";
     int hexlen = 2*len; // zwei hex zeichen pro byte
+    int hexlen_max;
+    bool success = SUCCESS;
     
-    if(hexlen >= 255){
-        fprintf(stderr, "%s %d: <len> too long\n", __FILE__, __LINE__);
-        return ERROR; // FSK Modulation maximal 64 Bytes
+    /* calculate max transmit length */
+    switch(mode){
+        case lora:
+            hexlen_max = 255;
+            break;
+        case fsk:
+            hexlen_max = 64;
+            break;
+        default:
+            /* no radio mode selected */
+            return ERROR;
     }
 
+    /* check max transmit length */
+    if(hexlen >= hexlen_max){
+        fprintf(stderr, "%s %d: <len> too long\n", __FILE__, __LINE__);
+        return ERROR; 
+    }
+
+    /* generate transmit frame */
     sprintf(txdat, "radio tx ");
-    // copy payload
+    // convert bytes to ascii symbols
     for(int i = 0; i<(len);i++){
         sprintf(&txdat[2*i+9], "%.2x", data[i]);
     }
-    _parser->send(txdat);
+    success = success && _parser->send(txdat)
+        && _parser->recv("ok\r\n")
+        && _parser->recv("radio_tx_ok\r\n");
 
-    // OK
-    i = readLine(&ret);
-    printf("lora return len: %d, msg: %s\n",i, ret);
-    
-    // wait for the radio to transmit data
-    wait(1);
-
-    // RADIO TX OK
-    i = readLine(&ret);
-    printf("lora return len: %d, msg: %s\n",i, ret);
-
-    return SUCCESS;
+    return success;
 }
 
 int LoraRadio::readLine(char **data){

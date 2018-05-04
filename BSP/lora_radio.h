@@ -16,7 +16,10 @@
 
 #define TX_MAX (127) /* 127 bytes -> 254 hex values < max 255 */
 
-
+typedef enum radiomode_e{
+    lora = 0,
+    fsk
+} radiomode_t;
 
 void RadioTask();
 // extern CircularBuffer<char, BUF_SIZE> RadioTxBuf;
@@ -28,6 +31,7 @@ private:
     UARTSerial *_serial;
     ATCmdParser *_parser;
     DigitalInOut *_resetPin;
+    radiomode_t mode;
     int fw[3];
     int day, year, hour, min, sec;
     char month[4];
