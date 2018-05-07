@@ -53,11 +53,13 @@ public:
     LoraRadio(PinName PinTX, PinName PinRX, PinName PinNRST, int baud, int debug, signed char (*rxCallback)(fifo_t* buffer));
     
     int write(char *data, int len);
+    int read(char *data);
     void printFwVersion();
     void setSleep(int ms);
   
     int getVDD();
     int sendBytes(unsigned char *data, int len);
+    int receiveBytes(unsigned char **data);
     int readLine(char **data);
     void sendtest();
 

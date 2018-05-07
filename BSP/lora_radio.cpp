@@ -155,6 +155,12 @@ int LoraRadio::write(char *data, int len){
     return SUCCESS;
 }
 
+int LoraRadio::read(char *data){
+    return 0;
+}
+
+
+
 int LoraRadio::getFwVersion(){
     _parser->flush();
     _parser->send("sys get ver");
@@ -252,8 +258,29 @@ int LoraRadio::sendBytes(unsigned char *data, int len){
     return success;
 }
 
+/* received bytes copied to data and number of bytes returned */
+int LoraRadio::receiveBytes(unsigned char **data){
+    char *msg;
+    bool success = _parser->send("radio rx 0")
+    && _parser->recv("ok\r\n")
+    && _parser->recv("radio_rx ");
+
+    if(success){
+        int len = readLine(&msg);
+
+        if(len <= 0)
+            return -1;
+
+        *data = (unsigned char *)msg;
+        return len;
+    }
+    else{
+        return -1;
+    }
+}
+
 int LoraRadio::readLine(char **data){
-    #define BUFFLEN 64
+    #define BUFFLEN 640
     static char msg[BUFFLEN];
     int i = 0;
     while(i<(BUFFLEN-1)){
