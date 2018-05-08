@@ -47,29 +47,45 @@ while(1)
     smpReceiveBytes(rx_data,instance); %Send the received bytes to the smp library
 
     % check for received frames in smp library
-%     disp(strcat('rx_msg: ', rx_msg));
     if smpMessagesToReceive(instance) == 0 %Check if the smp library has received a valid message
-        fprintf('Data should be correct and therefore the receive counter should be greater than zero\n');
+        error('Data should be correct and therefore the receive counter should be greater than zero\n');
     end
-    [receivedMessage, success] = smpGetNextReceiveMessage(instance); %Get received message from the buffer
-    % convert bytes to string
+    [receivedMessage_raw, success] = smpGetNextReceiveMessage(instance); %Get received message from the buffer
+
     
+    % convert received integer values to hex string
     disp('received Message');
-    disp(receivedMessage);
-    receivedMessage = dec2hex(receivedMessage);
+    disp(receivedMessage_raw);
+    receivedMessage = dec2hex(receivedMessage_raw);
     if(length(receivedMessage)>0)
-        str =  strjoin(string(receivedMessage));
-        str = stripblanks(str);
+        rxmsg =  strjoin(string(receivedMessage));
+        rxmsg = stripblanks(rxmsg);
         % display
-        fprintf('Received: \n%s\n', str);
+        fprintf('Received: \n%s\n', rxmsg);
     else
         fprintf('no message received\n');
+        continue;
     end
     
-    pause(0.1);
-    %% send somethin back 
+    pause(0.5);
+    
+    % generate smp frame
+    smpSendBytes(receivedMessage_raw,instance); %Prepare message for sending
+    if smpSendMessagesCount(instance) == 0 %Check how many messages are in the send buffer
+        error('smp should have one message in the buffer at this point');
+    end
+    [sendMessage, success] = smpGetNextSendMessage(instance); %Get one message to send over the interface
+    if ~success
+        error('smp send Error');
+    end
+   
+    txmsg = dec2hex(sendMessage);
+    txmsg = strjoin(string(txmsg));
+    txmsg = stripblanks(txmsg);
+    
+    % send somethin back 
     fprintf('\nsend return message: \n');
-    fprintf(s,'radio tx %s\n',str);
+    fprintf(s,'radio tx %s\n',txmsg);
     % wait for response
     while(s.BytesAvailable==0);pause(0.5);end
     % read ack response
@@ -80,6 +96,7 @@ while(1)
 %     % read ack response
 %     rx = char(fread(s,s.BytesAvailable)');
 %     disp(rx);
+    pause(0.1);
     
 end
 
