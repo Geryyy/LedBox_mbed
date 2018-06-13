@@ -1,6 +1,1 @@
-[submodule "libsmp"]
-	path = libsmp
-	url = https://github.com/Freshdouble/libsmp.git
-[submodule "libfifo"]
-	path = libfifo
-	url = https://github.com/Freshdouble/libfifo.git
+
