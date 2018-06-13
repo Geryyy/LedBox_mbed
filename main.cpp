@@ -100,42 +100,17 @@ int main()
 {   
     init();
     
-    //Watchdog Lessie = Watchdog(1);
     WatchdogThread.start(WatchdogTask);
     LEDThread.start(LEDTask);
-    //SysPrintThread.start(PrintSystemInformation);
-    // RadioThread.start(BatteryTaskRadio);
-    // LoraDevThread.start(LoraDevTask);
     RadioThread.start(radioTransceiveTask); // transmit with ringbuffer
 
-    // LEDdriverThread.start(LEDdriverTask);
-    // BatteryThread.start(BatteryTask2);
-
-    //printf("Deep sleep allowed: %i\r\n", sleep_manager_can_deep_sleep());
-    char msg[1024] = {0};
-    BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
     while(true) {
-        
-        
-        // sprintf(msg, "Tbat:\t%4.1f C\nUbat:\t%4.2f V\nIbat:\t%4.3f A\nUin:\t%4.2f V\nUsys:\t%4.2f V\nIin:\t%4.3f A\nTdie:\t%4.1f C\n\r",\
-        //     bat.getBatTemp(), \
-        //     bat.getUBat(), \
-        //     bat.getIBat(),
-        //     bat.getUin(),\
-        //     bat.getUsys(),\
-        //     bat.getIin(),\
-        //     bat.getTdie() );
-        
-        // for(uint16_t i = 0; i<4; i++){ // for(uint16_t i = 0; i<strlen(msg); i++){
-        //     RadioTxBuf.push(msg[i]);
-        // }
         for(int i = 0; i<3; i++){
             RadioTxBuf.push('U');
         }
 
         printf("TX buffer size: %ld\nRX buffer size: %ld\n",RadioTxBuf.size(), RadioRxBuf.size());
     wait(5);
-
     }
 }
 

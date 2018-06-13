@@ -46,6 +46,8 @@ PROJECT := LedBox_mbed
 ###############################################################################
 # Objects and Paths
 
+OBJECTS += ./BSP/Radio/RFM98W.o
+OBJECTS += ./BSP/Radio/Radio.o
 OBJECTS += ./libsmp/c/libsmp.o
 OBJECTS += ./libfifo/c/libfifo.o
 OBJECTS += ./BSP/eeprom.o
@@ -358,6 +360,7 @@ INCLUDE_PATHS += -I../.
 INCLUDE_PATHS += -I.././libsmp/c
 INCLUDE_PATHS += -I.././libfifo/c
 INCLUDE_PATHS += -I.././BSP
+INCLUDE_PATHS += -I.././BSP/Radio
 INCLUDE_PATHS += -I.././Scripts
 INCLUDE_PATHS += -I.././application
 INCLUDE_PATHS += -I.././mbed-os

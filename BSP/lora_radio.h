@@ -22,9 +22,6 @@ typedef enum radiomode_e{
 } radiomode_t;
 
 void RadioTask();
-// extern CircularBuffer<char, BUF_SIZE> RadioTxBuf;
-// extern CircularBuffer<char, BUF_SIZE> RadioRxBuf;
-// void radioTransceiveTask();
 
 class LoraRadio{
 private:
