@@ -1,12 +1,16 @@
 #include "RFM98W.h"
 
 
-RFM98W::RFM98W() : Radio()
+RFM98W::RFM98W(PinName MOSI, PinName MISO, PinName SCK, PinName CS, PinName RESET)
+		: Radio(), spi(MOSI,MISO,SCK), cs(CS,1), reset(RESET,1)
 {
-    /* todo: implement */
+    spi.format(8,0); /* 8 bits; mode 0: CPOL = 0, CPHA = 0 */
+	spi.frequency(1000000);
+
+	/* todo: implement */
 }
 
-
+/* plementation of virutal functions of parent class */
 int RFM98W::serviceRadio(){
     /* todo: implement */
     return 0;
@@ -22,10 +26,10 @@ int RFM98W::sendBytes(unsigned char *data, int len){
 
 void RFM98W::lora_reset()
 {
-	// Chip_GPIO_SetPinState(LPC_GPIO, LORA_Reset_Port, LORA_Reset_PinNumber, false);
-	// delay(10);
-	// Chip_GPIO_SetPinState(LPC_GPIO, LORA_Reset_Port, LORA_Reset_PinNumber, true);
-	// delay(10);
+	reset.write(0);
+	wait_ms(10);
+	reset.write(1);
+	wait_ms(10);
 }
 
 uint8_t RFM98W::lora_readVersion()
@@ -37,15 +41,7 @@ uint8_t RFM98W::lora_readVersion()
 
 void RFM98W::lora_init(loraSettings_t* settings)
 {
-
 	loraLocked = 0;
-
-	// Chip_GPIO_SetPinDIRInput(LPC_GPIO, 1, 9);
-
-	spi_init();
-
-	// set SS high
-	// Chip_GPIO_SetPinState(LPC_GPIO, LORA_CS_Port, LORA_CS_PinNumber, true);
 	lora_reset();
 
 	// start SPI
@@ -100,9 +96,6 @@ uint8_t RFM98W::lora_ready()
 
 //###########################PRIVATE FUNCTIONS##############################################
 
-void RFM98W::spi_init(void){
-	/* todo: implement */
-}
 
 uint8_t RFM98W::lora_singleTransfer(uint8_t address, uint8_t value)
 {
@@ -112,13 +105,14 @@ uint8_t RFM98W::lora_singleTransfer(uint8_t address, uint8_t value)
 	{ 0, 0 };
 	uint8_t transmit[2] =
 	{ address, value };
-	// Chip_GPIO_SetPinState(LPC_GPIO, LORA_CS_Port, LORA_CS_PinNumber, false);
-	// delayTicks(10);
+
+	cs.write(0);
+	wait_us(10);
 	// Chip_GPIO_DisableInt(LPC_GPIO, 1, 0x200);
-	// spi_transmitBlock(receive, transmit, sizeof(transmit));
+	spi.write((const char*) transmit, (int) sizeof(transmit), (char*) receive, (int) sizeof(receive));
 	// Chip_GPIO_EnableInt(LPC_GPIO, 1, 0x200);
-	// delayTicks(10);
-	// Chip_GPIO_SetPinState(LPC_GPIO, LORA_CS_Port, LORA_CS_PinNumber, true);
+	wait_us(10);
+	cs.write(1);
 	loraLocked = 0;
 	return receive[1];
 }
@@ -131,13 +125,14 @@ void RFM98W::lora_fifoTransfer(uint8_t address, const uint8_t* values, uint8_t l
 	uint8_t data[256];
 	data[0] = address | 0x80;
 	memcpy(&data[1], values, length);
-	// Chip_GPIO_SetPinState(LPC_GPIO, LORA_CS_Port, LORA_CS_PinNumber, false);
-	// delayTicks(10);
+
+	cs.write(0);
+	wait_us(10);
 	// Chip_GPIO_DisableInt(LPC_GPIO, 1, 0x200);
-	// spi_transmitBlock(0, data, length + 1);
+	spi.write((const char*) data, (int) (length + 1), (char*) NULL, (int) 0);
 	// Chip_GPIO_EnableInt(LPC_GPIO, 1, 0x200);
-	// delayTicks(10);
-	// Chip_GPIO_SetPinState(LPC_GPIO, LORA_CS_Port, LORA_CS_PinNumber, true);
+	wait_us(10);
+	cs.write(1);
 	loraLocked = 0;
 }
 
@@ -180,25 +175,6 @@ void RFM98W::lora_writeRegisterSafe(uint8_t address, uint8_t value)
 	lora_writeRegister(address, value);
 	if (mode != (MODE_LONG_RANGE_MODE | MODE_SLEEP)) lora_writeRegister(REG_OP_MODE, mode);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 loraStatus_e RFM98W::lora_getStatus()
 {
@@ -331,9 +307,9 @@ uint8_t RFM98W::lora_available() {
 	return (reg - _packetIndex);
 }
 
-int16_t RFM98W::lora_read() {
+int16_t RFM98W::lora_read(uint8_t* data) {
 	if (!lora_available()) {
-		return -1;
+		return ERROR;
 	}
 
 	_packetIndex++;
@@ -341,14 +317,15 @@ int16_t RFM98W::lora_read() {
 	uint8_t reg;
 		reg = lora_readRegister(REG_FIFO);
 
-	return reg;
+	*data = reg;
+	return SUCCESS;
 }
 
 uint16_t RFM98W::lora_readBytes(uint8_t* buffer, uint16_t length)
 {
 	uint16_t i = 0;
 	uint8_t data;
-	while((data = lora_read()) >= 0)
+	while( lora_read(&data) == SUCCESS)
 	{
 		if(i == length)
 		break;

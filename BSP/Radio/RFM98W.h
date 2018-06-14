@@ -4,6 +4,7 @@
  * @brief: header file for RFM98W lora module support class
  */
 
+#include "mbed.h"
 #include "Radio.h"
 
 // registers
@@ -73,7 +74,7 @@ typedef enum
 		idle,
 		send,
 		receive,
-		sleep,
+		sleep_mode,
 		disconnected
 }loraStatus_e;
 
@@ -84,6 +85,12 @@ public:
 
 
 private:
+    // SPI
+    SPI spi;
+    // Chip Select
+    DigitalOut cs;
+    // Reset
+    DigitalOut reset;
 
 
     uint32_t _frequency;
@@ -95,7 +102,7 @@ private:
 
 /* Methods */
 public:
-    RFM98W();
+    RFM98W(PinName MOSI, PinName MISO, PinName SCK, PinName CS, PinName RESET);
     int serviceRadio();
 
     void lora_init(loraSettings_t* settings);
@@ -141,7 +148,7 @@ private:
     uint8_t lora_packetRssi();
     float lora_packetSnr();
     uint8_t lora_available();
-    int16_t lora_read();
+    int16_t lora_read(uint8_t* data);
     uint16_t lora_readBytes(uint8_t* buffer, uint16_t length);
     uint8_t lora_sendBytes(const uint8_t* buffer, uint8_t length);
     int16_t lora_peek();

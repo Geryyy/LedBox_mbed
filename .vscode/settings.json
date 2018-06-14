@@ -6,6 +6,7 @@
         "xtr1common": "cpp",
         "iosfwd": "cpp",
         "xlocale": "cpp",
-        "xstring": "cpp"
+        "xstring": "cpp",
+        "ostream": "cpp"
     }
 }
