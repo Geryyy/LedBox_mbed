@@ -1,13 +1,30 @@
 #include "RFM98W.h"
+#include "globals.h"
 
-
-RFM98W::RFM98W(PinName MOSI, PinName MISO, PinName SCK, PinName CS, PinName RESET)
-		: Radio(), spi(MOSI,MISO,SCK), cs(CS,1), reset(RESET,1)
+RFM98W::RFM98W(PinName MOSI, PinName MISO, PinName SCK, PinName CS, PinName RESET, PinName INTERRUPT)
+		: Radio(), spi(MOSI,MISO,SCK), cs(CS,1), reset(RESET,1), dio0(INTERRUPT)
 {
     spi.format(8,0); /* 8 bits; mode 0: CPOL = 0, CPHA = 0 */
 	spi.frequency(1000000);
 
+	dio0.mode(PullUp);
+
 	/* todo: implement */
+	loraSettings_t lora_settings;
+	memset(&lora_settings, 0, sizeof(loraSettings_t));
+
+	lora_settings.codingRateDenominator = LORA_CODING_RATE;
+	lora_settings.crc = LORA_CRC;
+	lora_settings.frequency = LORA_FREQUENCY;
+	lora_settings.preambleLength = LORA_PREAMBLE_LENGTH;
+	lora_settings.receivecallback = NULL; //lora_dataReadyCallback;
+	lora_settings.signalBandwith = LORA_SIGNAL_BANDWIDTH;
+	lora_settings.spreadingFactor = LORA_SPREADING_FACTOR;
+	lora_settings.syncword = LORA_SYNC_WORD;
+	lora_settings.txPower = LORA_TX_POWER;
+	lora_settings.messageSize = LORA_PACKET_LENGTH;
+	lora_settings.transmitCompleteClb = NULL; //lora_transmitComplete;
+	lora_init(&lora_settings);
 }
 
 /* plementation of virutal functions of parent class */
@@ -17,8 +34,33 @@ int RFM98W::serviceRadio(){
 }
 
 int RFM98W::sendBytes(unsigned char *data, int len){
-    /* todo: implement */
-    return 0;
+    uint8_t loraPacket[LORA_PACKET_LENGTH];
+	uint8_t ret = SUCCESS;
+
+	lora_poll();
+
+	if (lora_getStatus() == send)
+		return ERROR;
+
+	uint32_t dataAvailable = len; //fifo_datasize(&sendFifo);
+
+	while (dataAvailable > 0) {
+		if (dataAvailable >= LORA_PACKET_LENGTH) {
+			// dataRead = data; //fifo_read_bytes(loraPacket, &sendFifo, LORA_PACKET_LENGTH);
+			memcpy(loraPacket, data, LORA_PACKET_LENGTH);
+			lora_sendBytes(loraPacket, LORA_PACKET_LENGTH);
+			dataAvailable -= LORA_PACKET_LENGTH;
+			data += LORA_PACKET_LENGTH;
+		}
+		else
+		{
+			memset(loraPacket, 0x00, LORA_PACKET_LENGTH);
+			memcpy(loraPacket,data,dataAvailable);
+			lora_sendBytes(loraPacket, LORA_PACKET_LENGTH);
+			dataAvailable -= dataAvailable;
+		}
+	}
+	return ret;
 }
 
 
@@ -144,10 +186,10 @@ void RFM98W::PIOINT1_IRQHandler(void)
 
 void RFM98W::lora_poll()
 {
-// 	if (Chip_GPIO_GetPinState(LPC_GPIO, 1, 9))
-// 	{
-// 		lora_handleDio0Rise();
-// 	}
+	if (dio0.read())
+	{
+		lora_handleDio0Rise();
+	}
 // #ifdef Lora_Block
 // #endif
 }

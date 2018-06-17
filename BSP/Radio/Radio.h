@@ -14,7 +14,7 @@ class Radio{
 
 public:
     Radio();
-    virtual int serviceRadio();
+    virtual int serviceRadio() = 0; // rein virtuelle Methode
 
     int readPacket(char* data, int* len);
     int sendPacket(char* data, int len);
@@ -22,7 +22,7 @@ public:
 private:
     bool debug;
 
-    virtual int sendBytes(unsigned char *data, int len);
+    virtual int sendBytes(unsigned char *data, int len) = 0; // rein virtuelle Methode
 
     // SMP
     unsigned char buffer[100];

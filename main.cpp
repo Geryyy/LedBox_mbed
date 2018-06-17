@@ -8,6 +8,7 @@
 #include "libsmp.h"
 #include "libfifo.h"
 #include <cstddef>
+#include "Radio/RFM98W.h"
 
 void init();
 void BatteryTaskRadio();
@@ -102,15 +103,20 @@ int main()
     
     WatchdogThread.start(WatchdogTask);
     LEDThread.start(LEDTask);
-    RadioThread.start(radioTransceiveTask); // transmit with ringbuffer
+    // RadioThread.start(radioTransceiveTask); // transmit with ringbuffer
+    RFM98W radio(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7);
+
+    char msg[] = "Hello World!\n";
 
     while(true) {
-        for(int i = 0; i<3; i++){
-            RadioTxBuf.push('U');
-        }
+    //     for(int i = 0; i<3; i++){
+    //         RadioTxBuf.push('U');
+    //     }
 
-        printf("TX buffer size: %ld\nRX buffer size: %ld\n",RadioTxBuf.size(), RadioRxBuf.size());
-    wait(5);
+    //     printf("TX buffer size: %ld\nRX buffer size: %ld\n",RadioTxBuf.size(), RadioRxBuf.size());
+    wait(1);
+    radio.sendPacket(msg,sizeof(msg));
+    printf("Packet send\n");
     }
 }
 

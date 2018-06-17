@@ -91,6 +91,8 @@ private:
     DigitalOut cs;
     // Reset
     DigitalOut reset;
+    // Interrupt
+    DigitalIn dio0;
 
 
     uint32_t _frequency;
@@ -102,7 +104,7 @@ private:
 
 /* Methods */
 public:
-    RFM98W(PinName MOSI, PinName MISO, PinName SCK, PinName CS, PinName RESET);
+    RFM98W(PinName MOSI, PinName MISO, PinName SCK, PinName CS, PinName RESET, PinName INTERRUPT);
     int serviceRadio();
 
     void lora_init(loraSettings_t* settings);
