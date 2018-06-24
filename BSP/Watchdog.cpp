@@ -28,11 +28,11 @@ void Watchdog::kick(){
 /*** task ***/
 
 void WatchdogTask(){
-    Watchdog lessie = Watchdog(4);
+    Watchdog lessie = Watchdog(1);
 
     while(true){
         lessie.kick();
-        wait_ms(2);
+        wait_ms(100);
     }
 }
 
