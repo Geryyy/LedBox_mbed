@@ -8,7 +8,7 @@
 #include "libsmp.h"
 #include "libfifo.h"
 #include <cstddef>
-#include "Radio/RFM98W.h"
+#include "RFM98W.h"
 
 void init();
 void BatteryTaskRadio();
