@@ -96,9 +96,15 @@ CircularBuffer<char, BUF_SIZE> RadioRxBuf;
 // }
 
 /****************** MAIN **********************/
+signed char smp_frameReady(fifo_t* buffer);
+
+Thread radioThread;
+RFM98W radio(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 10, smp_frameReady, NULL, false);
 
 signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
 {
+
+
     int32_t len = fifo_datasize(buffer);
     printf("SMP-Frame received!!!\n\t");
     for(int i = 0; i<len; i++){
@@ -107,11 +113,11 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
         printf("%c",ch);
     }
     printf("\n\n");
+
+
+
     return len;
 }
-
-Thread radioThread;
-RFM98W radio(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 10, smp_frameReady, NULL, false);
 
 void radioTask(){
     while(true){
@@ -129,8 +135,7 @@ int main()
     // RadioThread.start(radioTransceiveTask); // transmit with ringbuffer
 
 
-    char msg[256];
-    int i = 0;
+    
 
     while(true) {
     //     for(int i = 0; i<3; i++){
@@ -138,11 +143,14 @@ int main()
     //     }
 
     //     printf("TX buffer size: %ld\nRX buffer size: %ld\n",RadioTxBuf.size(), RadioRxBuf.size());
-    wait(1);
-    sprintf(msg,"Hello World! Packet-Nr: %d\n",i);
-    radio.sendPacket(msg,strlen(msg));
-    printf("Packet send\n");
-    i++;
+    wait(2);
+        /* send acknowledge */
+        static char msg[256];
+        static int i = 0;
+        sprintf(msg,"hello nr: %d\n",i);
+        radio.sendPacket(msg,strlen(msg));
+        printf("Packet send\n");
+        i++;
     }
 }
 
