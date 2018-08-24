@@ -50,11 +50,14 @@ int LEDdriver::setPWM(float val){
 
 /*** Testfunktion ***/
 
+extern LEDdriver L1;
+extern LEDdriver L2;
+
 void LEDdriverTask(){
     printf("LEDdriver Task gestartet\n");
-    LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
-    LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
-    float I_LED = 1.0;
+    // LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
+    // LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
+    float I_LED = 0.1;
 
     L1.setILed(0.0); // 50mA
     L1.setPWM(0.0);
@@ -68,9 +71,9 @@ void LEDdriverTask(){
 
     while(true){
         wait(0.01);
-         float val = I_LED*(1.0 + sin(2*M_PI*0.5*t))/2.0;
+         float val = I_LED*(1.0 + sin(2*M_PI*1*t))/2.0;
          L1.setILed(val);
-         val = I_LED*(1.0 + cos(2*M_PI*0.5*t))/2.0;
+         val = I_LED*(1.0 + cos(2*M_PI*1*t))/2.0;
          L2.setILed(val);
          t = t + 0.01;
     }

@@ -20,7 +20,7 @@ void terminalTask();
 Thread LEDThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDThread");
 // Thread SysPrintThread(osPriorityNormal, OS_STACK_SIZE,NULL,"SysPrintThread");
 // Thread RadioThread(osPriorityNormal, 8*1024,NULL,"RadioThread");
-// Thread LEDdriverThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDdriverThread");
+Thread LEDdriverThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDdriverThread");
 // Thread BatteryThread(osPriorityNormal, OS_STACK_SIZE,NULL,"BatteryThread");
 Thread WatchdogThread(osPriorityNormal, OS_STACK_SIZE,NULL,"WatchdogThread");
 
@@ -168,7 +168,7 @@ char * getline(void) {
 
 
 
-#define TERMINAL_STR_LEN 24
+// #define TERMINAL_STR_LEN 24
 
 void terminalTask(){
     char *cmdstring;
@@ -188,32 +188,3 @@ void terminalTask(){
 }
 
 
-/**
-* @brief prints name of commands and usage
-*/
-error_t _systemstatus(int argc, arg_t* argv) {
-    printf("System Status:\n");
-    printf("Tbat:\t%4.1f C\nUbat:\t%4.2f V\nIbat:\t%4.3f A\nUin:\t%4.2f V\nUsys:\t%4.2f V\nIin:\t%4.3f A\nTdie:\t%4.1f C\n\r",\
-        bat.getBatTemp(), \
-        bat.getUBat(), \
-        bat.getIBat(),
-        bat.getUin(),\
-        bat.getUsys(),\
-        bat.getIin(),\
-        bat.getTdie() );
-
-    printf("Battery Charger Status:\n");
-	bat.printStatus();
-	return E_SUCCESS;
-}
-
-error_t _led1on(int argc, arg_t* argv){
-    L1.setILed(0.1);
-    L1.on();
-    return E_SUCCESS;
-}
-
-error_t _led1off(int argc, arg_t* argv){
-    L1.off();
-    return E_SUCCESS;
-}

@@ -46,7 +46,7 @@ PROJECT := LedBox_mbed
 ###############################################################################
 # Objects and Paths
 
-OBJECTS += ./TerminalParser/terminal_conf.o
+OBJECTS += ./terminal_conf.o
 OBJECTS += ./TerminalParser/terminal.o
 OBJECTS += ./radio/RFM98W.o
 OBJECTS += ./radio/Radio.o
