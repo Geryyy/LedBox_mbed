@@ -29,35 +29,6 @@ signed char rxCallback(fifo_t *buffer){
     return 0;
 }
 /*** TASKS ***/
-/*
-// void BatteryTaskRadio(){
-//     BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
-//     LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, RADIO_RESET, LORA_BAUD, DEBUG_ON,NULL);
-
-//     char msg[1024] = {0};
-//     while(1){
-//         sprintf(msg, "Tbat:\t%4.1f C\nUbat:\t%4.2f V\nIbat:\t%4.3f A\nUin:\t%4.2f V\nUsys:\t%4.2f V\nIin:\t%4.3f A\nTdie:\t%4.1f C\n\r",\
-//             bat.getBatTemp(), \
-//             bat.getUBat(), \
-//             bat.getIBat(),
-//             bat.getUin(),\
-//             bat.getUsys(),\
-//             bat.getIin(),\
-//             bat.getTdie() );
-//         radio.write(msg,strlen(msg));
-//         bat.printStatus();
-//         printf("System Status:\n----------------------\n");
-//         printf("%s\n",msg);
-//         wait(2);
-//     } 
-// }
-*/
-
-// #define BUF_SIZE 1024
-
-// CircularBuffer<char, BUF_SIZE> RadioTxBuf;
-// CircularBuffer<char, BUF_SIZE> RadioRxBuf;
-
 
 /****************** MAIN **********************/
 signed char smp_frameReady(fifo_t* buffer);

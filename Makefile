@@ -443,6 +443,7 @@ CPP     = 'arm-none-eabi-g++' '-std=gnu++98' '-fno-rtti' '-Wvla' '-c' '-Wall' '-
 LD      = 'arm-none-eabi-gcc'
 ELF2BIN = 'arm-none-eabi-objcopy'
 PREPROC = 'arm-none-eabi-cpp' '-E' '-P' '-Wl,--gc-sections' '-Wl,--wrap,main' '-Wl,--wrap,_malloc_r' '-Wl,--wrap,_free_r' '-Wl,--wrap,_realloc_r' '-Wl,--wrap,_memalign_r' '-Wl,--wrap,_calloc_r' '-Wl,--wrap,exit' '-Wl,--wrap,atexit' '-Wl,-n' '-mcpu=cortex-m3' '-mthumb'
+ELFSIZE = 'arm-none-eabi-size'
 
 
 C_FLAGS += -std=gnu99
@@ -620,7 +621,7 @@ ASM_FLAGS += -I./mbed-os/targets/TARGET_STM/TARGET_STM32L1/TARGET_NUCLEO_L152RE/
 ASM_FLAGS += -I./Scripts
 
 
-LD_FLAGS :=-Wl,--gc-sections -Wl,--wrap,main -Wl,--wrap,_malloc_r -Wl,--wrap,_free_r -Wl,--wrap,_realloc_r -Wl,--wrap,_memalign_r -Wl,--wrap,_calloc_r -Wl,--wrap,exit -Wl,--wrap,atexit -Wl,-n -mcpu=cortex-m3 -mthumb 
+LD_FLAGS :=-Wl,--gc-sections -Wl,--wrap,main -Wl,--wrap,_malloc_r -Wl,--wrap,_free_r -Wl,--wrap,_realloc_r -Wl,--wrap,_memalign_r -Wl,--wrap,_calloc_r -Wl,--wrap,exit -Wl,--wrap,atexit -Wl,-n -mcpu=cortex-m3 -mthumb
 LD_SYS_LIBS :=-Wl,--start-group -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys  -Wl,--end-group
 
 # Tools and Flags
@@ -675,6 +676,7 @@ $(PROJECT).bin: $(PROJECT).elf
 
 $(PROJECT).hex: $(PROJECT).elf
 	$(ELF2BIN) -O ihex $< $@
+	$(ELFSIZE)  '$(PROJECT).elf'
 
 
 # Rules

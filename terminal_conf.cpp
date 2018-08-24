@@ -27,6 +27,7 @@ error_t _led2on(int argc, arg_t* argv);
 error_t _led2off(int argc, arg_t* argv);
 error_t _ledshowon(int argc, arg_t* argv);
 error_t _ledshowoff(int argc, arg_t* argv);
+error_t _send(int argc, arg_t* argv);
 
 
 termcmd_t cmd_printStatus{
@@ -91,6 +92,13 @@ termcmd_t cmd_ledshowoff{
 	"ledshowoff",
 	"Turn off LED Show",
 	_ledshowoff
+};
+
+termcmd_t cmd_send{
+	"send",
+	"send [message]",
+	"Send message over radio",
+	_send
 };
 
 /**
@@ -160,9 +168,22 @@ error_t _ledshowoff(int argc, arg_t* argv){
     return E_SUCCESS;
 }
 
+error_t _send(int argc, arg_t* argv){
+	if(argc > 1){
+		for (int i = 1; i < argc; i++) {
+			radio.sendPacket(argv[i].arg,strlen(argv[i].arg));
+		}
+	}
+	else{
+		printf("command syntax wrong!");
+	}
+    return E_SUCCESS;
+}
+
+
 
 
 /*** command list ***/
-termcmd_t *cmd_list[] = { &cmd_printStatus, &cmd_argtest, &cmd_systemstatus, &cmd_led1on, &cmd_led1off, &cmd_led2on, &cmd_led2off, &cmd_ledshowon, &cmd_ledshowoff };
+termcmd_t *cmd_list[] = { &cmd_printStatus, &cmd_argtest, &cmd_systemstatus, &cmd_led1on, &cmd_led1off, &cmd_led2on, &cmd_led2off, &cmd_ledshowon, &cmd_ledshowoff, &cmd_send };
 const int cmdlist_len = (sizeof(cmd_list) / sizeof(termcmd_t*));
 
