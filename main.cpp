@@ -9,10 +9,13 @@
 #include "libfifo.h"
 #include <cstddef>
 #include "RFM98W.h"
+#include "TerminalParser/terminal.h"
 
 void init();
 void BatteryTaskRadio();
 void radioTransceiveTask();
+void sendTestMsg();
+void terminalTask();
 
 Thread LEDThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDThread");
 // Thread SysPrintThread(osPriorityNormal, OS_STACK_SIZE,NULL,"SysPrintThread");
@@ -26,7 +29,7 @@ signed char rxCallback(fifo_t *buffer){
     return 0;
 }
 /*** TASKS ***/
-
+/*
 // void BatteryTaskRadio(){
 //     BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
 //     LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, RADIO_RESET, LORA_BAUD, DEBUG_ON,NULL);
@@ -48,83 +51,47 @@ signed char rxCallback(fifo_t *buffer){
 //         wait(2);
 //     } 
 // }
+*/
 
+// #define BUF_SIZE 1024
 
-#define BUF_SIZE 1024
+// CircularBuffer<char, BUF_SIZE> RadioTxBuf;
+// CircularBuffer<char, BUF_SIZE> RadioRxBuf;
 
-CircularBuffer<char, BUF_SIZE> RadioTxBuf;
-CircularBuffer<char, BUF_SIZE> RadioRxBuf;
-
-
-
-// void radioTransceiveTask(){
-//     char data[256] = {0};
-//     LoraRadio radio = LoraRadio(RADIO_TX, RADIO_RX, RADIO_RESET, LORA_BAUD, DEBUG_ON, rxCallback);
-
-//     wait(1);
-
-//     while(1){
-//         // if databuf not empty -> transmit
-//         int i = 0;
-//         while(RadioTxBuf.empty() == false){
-//             RadioTxBuf.pop(data[i]);
-//             i++;
-//             if(i >= 100) // 100 bytes -> 200 hex values < max 255
-//                 break;
-//         }
-
-//         if(i > 0){
-//             // radio.sendBytes((unsigned char*)data, i);
-//             radio.write((char*)data, i);
-//             // back to start, transmit remaining data
-//             continue;
-//         }
-
-//         // wait(1);
-//         // if nothing to transmit, receive data
-//         unsigned char *ret;
-//         printf("\t\t receiveBytes()\n");
-//         int len = radio.receiveBytes(&ret); //radio.readLine(&ret);
-//         for(int i = 0; i<len; i++){
-//             RadioRxBuf.push(ret[i]);
-//             printf("\t\t rxbuffer.push(): %c\n", ret[i]);
-//         }
-        
-
-//         wait(1);
-//     }
-// }
 
 /****************** MAIN **********************/
 signed char smp_frameReady(fifo_t* buffer);
 
+
+Serial pc(USBTX, USBRX, 9600);
 Thread radioThread;
-RFM98W radio(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 10, smp_frameReady, NULL, false);
+Thread terminalThread;
+RFM98W radio(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 2, smp_frameReady, NULL, false);
+BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
+LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
+LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
 
 signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
 {
-
-
     int32_t len = fifo_datasize(buffer);
-    printf("SMP-Frame received!!!\n\t");
+    printf("radio smp rx:\t");
     for(int i = 0; i<len; i++){
         uint8_t ch;
         fifo_read_byte(&ch,buffer);
         printf("%c",ch);
     }
-    printf("\n\n");
-
-
-
+    printf("\n");
     return len;
 }
 
 void radioTask(){
     while(true){
         radio.serviceRadio();
-        wait(1);
+        wait(0.2);
     }
 }
+
+
 
 int main()
 {   
@@ -132,25 +99,12 @@ int main()
     // WatchdogThread.start(WatchdogTask);
     LEDThread.start(LEDTask);
     radioThread.start(radioTask);
-    // RadioThread.start(radioTransceiveTask); // transmit with ringbuffer
-
-
-    
+    terminalThread.start(terminalTask);
+    // RadioThread.start(radioTransceiveTask); // transmit with ringbuffer  
 
     while(true) {
-    //     for(int i = 0; i<3; i++){
-    //         RadioTxBuf.push('U');
-    //     }
-
-    //     printf("TX buffer size: %ld\nRX buffer size: %ld\n",RadioTxBuf.size(), RadioRxBuf.size());
     wait(2);
-        /* send acknowledge */
-        static char msg[256];
-        static int i = 0;
-        sprintf(msg,"hello nr: %d\n",i);
-        radio.sendPacket(msg,strlen(msg));
-        printf("Packet send\n");
-        i++;
+
     }
 }
 
@@ -164,3 +118,102 @@ void init(){
 
 
 
+void sendTestMsg(){
+    static char msg[256];
+    static int i = 0;
+    sprintf(msg,"hello nr: %d\n",i);
+    radio.sendPacket(msg,strlen(msg));
+    printf("Packet send\n");
+    i++;
+}
+
+
+
+
+
+
+char * getline(void) {
+	char * line = (char*)malloc(100), *linep = line;
+	size_t lenmax = 100, len = lenmax;
+	int c;
+
+	if (line == NULL)
+		return NULL;
+
+	for (;;) {
+		c = fgetc(stdin);
+		if (c == EOF)
+			break;
+
+		if (--len == 0) {
+			len = lenmax;
+			char * linen = (char*)realloc(linep, lenmax *= 2);
+
+			if (linen == NULL) {
+				free(linep);
+				return NULL;
+			}
+			line = linen + (line - linep);
+			linep = linen;
+		}
+
+		if ((*line++ = c) == '\n')
+			break;
+	}
+	*line = '\0';
+	return linep;
+}
+
+
+
+
+
+#define TERMINAL_STR_LEN 24
+
+void terminalTask(){
+    char *cmdstring;
+	printf("TerminalParser 0.1\n\n");
+
+    while(true){
+
+        printf("\nenter command: \n");
+		cmdstring = getline();
+
+		if (strcmp(cmdstring, "exit\n") == 0)
+			break;
+		procTerminalString(cmdstring, cmd_list);
+        free(cmdstring);
+        wait(0.1);
+    }
+}
+
+
+/**
+* @brief prints name of commands and usage
+*/
+error_t _systemstatus(int argc, arg_t* argv) {
+    printf("System Status:\n");
+    printf("Tbat:\t%4.1f C\nUbat:\t%4.2f V\nIbat:\t%4.3f A\nUin:\t%4.2f V\nUsys:\t%4.2f V\nIin:\t%4.3f A\nTdie:\t%4.1f C\n\r",\
+        bat.getBatTemp(), \
+        bat.getUBat(), \
+        bat.getIBat(),
+        bat.getUin(),\
+        bat.getUsys(),\
+        bat.getIin(),\
+        bat.getTdie() );
+
+    printf("Battery Charger Status:\n");
+	bat.printStatus();
+	return E_SUCCESS;
+}
+
+error_t _led1on(int argc, arg_t* argv){
+    L1.setILed(0.1);
+    L1.on();
+    return E_SUCCESS;
+}
+
+error_t _led1off(int argc, arg_t* argv){
+    L1.off();
+    return E_SUCCESS;
+}

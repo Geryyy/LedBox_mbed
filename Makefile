@@ -46,6 +46,8 @@ PROJECT := LedBox_mbed
 ###############################################################################
 # Objects and Paths
 
+OBJECTS += ./TerminalParser/terminal_conf.o
+OBJECTS += ./TerminalParser/terminal.o
 OBJECTS += ./radio/RFM98W.o
 OBJECTS += ./radio/Radio.o
 OBJECTS += ./libsmp/c/libsmp.o
@@ -357,6 +359,7 @@ OBJECTS += ./mbed-os/targets/TARGET_STM/us_ticker_32b.o
 
 INCLUDE_PATHS += -I../
 INCLUDE_PATHS += -I../.
+INCLUDE_PATHS += -I.././TerminalParser
 INCLUDE_PATHS += -I.././libsmp/c
 INCLUDE_PATHS += -I.././libfifo/c
 INCLUDE_PATHS += -I.././BSP

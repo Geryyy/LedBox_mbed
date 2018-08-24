@@ -2,3 +2,6 @@
 [submodule "radio"]
 	path = radio
 	url = https://github.com/Geryyy/radio.git
+[submodule "TerminalParser"]
+	path = TerminalParser
+	url = https://gitlab.com/geryyy/TerminalParser.git
