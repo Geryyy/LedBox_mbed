@@ -14,19 +14,20 @@ BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAl
     _Alert = new InterruptIn(SMBAlert);
 
     _devAddr = addr;
-    _queue = new EventQueue(32 * EVENTS_EVENT_SIZE);
-    _t = new Thread();
+    // _queue = new EventQueue(32 * EVENTS_EVENT_SIZE);
+    // _t = new Thread();
 
     _R_SNSI = 0.01;
     _R_SNSB = 0.01;
     _cellcount = 1;
 
-    _t->start(callback(_queue, &EventQueue::dispatch_forever));
+    // _t->start(callback(_queue, &EventQueue::dispatch_forever));
     _Alert->fall(_queue->event(BatteryManager::_serviceSMBAlert));
     // _Alert->fall(callback(this, &BatteryManager::serviceSMBAlert));
 
     setChargerParameter();
     setInputThresholds();
+    forceMeasSysOn();
 }
 
 
@@ -51,7 +52,7 @@ int BatteryManager::read(char reg, int16_t *rxdata){
     int error = SUCCESS;
     error += _i2c->write(_devAddr, &reg, 1, false); // register waehlen
     error += _i2c->read(_devAddr,rx,2,false); //register auslesen
-    *rxdata = (uint16_t)((rx[1]<<8) + rx[0]);
+    *rxdata = (int16_t)((rx[1]<<8) + rx[0]);
     if (error == 0)
         return SUCCESS;
     else return ERROR;
@@ -113,9 +114,12 @@ float BatteryManager::getBatRes(){
 }
 
 int BatteryManager::setIcharge(float Icharge){
-    if(Icharge > 0.0 && Icharge <= 32.0*0.001/_R_SNSB){
-        uint16_t icharge_target = uint16_t(Icharge*_R_SNSB/0.001 -1);
-        this->write(ICHARGE_TARGET,icharge_target);
+    if(Icharge > 0.0 && Icharge <= 32.0*0.001/_R_SNSB){ // 0.0 < Icharge <= 3.2A
+        uint16_t icharge_targ = uint16_t(Icharge*_R_SNSB/0.001 -1);
+        this->write(ICHARGE_TARGET,icharge_targ);
+
+        printf("setIcharge(): ICHARGE_TARGET = %d\n",icharge_targ);
+
         return SUCCESS;
     }
     else
@@ -228,6 +232,23 @@ int BatteryManager::setInputThresholds(){
     return SUCCESS;
 }
 
+int BatteryManager::forceMeasSysOn(){
+    // uint16_t data = 0x0000;
+    // this->read(CONFIG_BITS, (int16_t*)&data);
+    // data |= 0x0010;
+    // this->write(CONFIG_BITS, (int16_t)data);
+    this->write(CONFIG_BITS, 0xFFFF);
+    return SUCCESS;
+}
+
+int BatteryManager::forceMeasSysOff(){
+    uint16_t data = 0x0000;
+    this->read(CONFIG_BITS, (int16_t*)&data);
+    data &= ~(0x0010);
+    this->write(CONFIG_BITS, (int16_t)data);
+    return SUCCESS;
+}
+
 uint16_t BatteryManager::getChargerStatus(){
     uint16_t data = 0x0000;
     this->read(CHARGE_STATUS, (int16_t*)&data);
@@ -244,20 +265,36 @@ uint16_t BatteryManager::getSystemStatus(){
     uint16_t data = 0x0000;
     this->read(SYSTEM_STATUS, (int16_t*)&data);
     return data;
+}
 
+
+uint16_t BatteryManager::getChargerConfig(){
+    uint16_t data = 0x0000;
+    this->read(CHARGER_CONFIG_BITS,(int16_t*)&data);
+    return data & 0x0007; // Bits 0,1,2
+}
+
+uint16_t BatteryManager::getConfig(){
+    uint16_t data = 0x0000;
+    this->read(CONFIG_BITS,(int16_t*)&data);
+    return data; // Bits 0,..,8
 }
 
 void BatteryManager::printStatus(){
     uint16_t charger_state = getChargerState();
     uint16_t charger_status = getChargerStatus();
     uint16_t system_status = getSystemStatus();
+    uint16_t charger_config = getChargerConfig();
+    uint16_t config = getConfig();
 
     printf("\nLTC4015 Status Print:\n ------------------------\n");
+
     printf("Charge Status:\nVIN_UVCL_ACTIVE:\t%d\nIIN_LIMIT_ACTIVE:\t%d\nCONTANT_CURRENT:\t%d\nCONSTANT_VOLTAGE:\t%d\n\n", \
             (charger_status & 0x08) >> 3, \
             (charger_status & 0x04) >> 2, \
             (charger_status & 0x02) >> 1, \
             (charger_status & 0x01) >> 0 );
+
     printf("Charger State:\nequalize_charge:\t%d\nabsorb_charge:\t\t%d\ncharger_suspended:\t%d\nprecharge:\t\t%d\ncc_cv_charge:\t\t%d\ntc_pause:\t\t%d\ntimer_term:\t\t%d\nc_over_x_term:\t\t%d\nmax_charge_time_fault:\t%d\nbat_missing_fault:\t%d\nbat_short_fault:\t%d\n\n", \
             (charger_state & 0x400) >> 10, \
             (charger_state & 0x200) >> 9, \
@@ -270,6 +307,20 @@ void BatteryManager::printStatus(){
             (charger_state & 0x04) >> 2, \
             (charger_state & 0x02) >> 1, \
             (charger_state & 0x01) >> 0 );
+
+    printf("Charger Config Bits:\nen_c_over_x_term:\t%d\nen_lead_acid_temp_comp:\t%d\nen_jeita:\t\t%d\n\n",\
+            (charger_config & 0x0004) >> 2, \
+            (charger_config & 0x0002) >> 1, \
+            (charger_config & 0x0002) >> 0 );
+
+    printf("Config Bits:\t%x\nsuspend_charger:\t%d\nrun_bsr:\t\t%d\nforce_meas_sys_on:\t%d\nmppt_en_i2c:\t\t%d\nen_qcount:\t\t%d\n\n",\
+            config, \
+            (config & 0x0100) >> 8, \
+            (config & 0x0020) >> 5, \
+            (config & 0x0010) >> 4, \
+            (config & 0x0008) >> 3, \
+            (config & 0x0004) >> 2 );             
+                        
     printf("System Status:\ncharger_enabled:\t%d\nmppt_en_pin:\t\t%d\nequalize_req:\t\t%d\ndrvcc_good:\t\t%d\ncell_count_error:\t%d\nok_to_charge:\t\t%d\nno_rt:\t\t\t%d\nthermal_shutdown:\t%d\nvin_ovlo:\t\t%d\nvin_gt_vbat:\t\t%d\nintvcc_gt_4p3v:\t\t%d\nintvcc_gt2p8v:\t\t%d\n\n", \
             (system_status & 0x2000) >> 13, \
             (system_status & 0x800) >> 11, \

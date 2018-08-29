@@ -58,6 +58,15 @@
 #define CHARGE_STATUS_ALERTS 0x38
 #define SYSTEM_STATUS 0x39
 
+// Coulomb Counter
+#define QCOUNT_LO_ALERT_LIMIT 0x10
+#define QCOUNT_HI_ALERT_LIMIT 0x11
+#define QCOUNT_PRESCALE_FACTOR 0x12
+#define QCOUNT 0x13
+#define CONFIG_BITS 0x14
+
+
+
 
 
 class BatteryManager{
@@ -95,9 +104,13 @@ public:
     int setUVCL(float Uin);
     int setChargerParameter();
     int setInputThresholds();
+    int forceMeasSysOn();
+    int forceMeasSysOff();
     uint16_t getChargerStatus();
     uint16_t getChargerState();
     uint16_t getSystemStatus();
+    uint16_t getChargerConfig();
+    uint16_t getConfig();
     void printStatus();
 };
 

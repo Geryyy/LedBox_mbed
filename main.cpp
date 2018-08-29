@@ -69,13 +69,14 @@ int main()
     init();
     // WatchdogThread.start(WatchdogTask);
     LEDThread.start(LEDTask);
-    radioThread.start(radioTask);
+    // radioThread.start(radioTask);
     terminalThread.start(terminalTask);
     // RadioThread.start(radioTransceiveTask); // transmit with ringbuffer  
 
     while(true) {
-    wait(2);
-
+        wait(2);
+        radio.stopreceive();
+        // bat.forceMeasSysOn();
     }
 }
 

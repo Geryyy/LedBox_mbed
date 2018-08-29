@@ -28,6 +28,10 @@ error_t _led2off(int argc, arg_t* argv);
 error_t _ledshowon(int argc, arg_t* argv);
 error_t _ledshowoff(int argc, arg_t* argv);
 error_t _send(int argc, arg_t* argv);
+error_t _getChargeCurrent(int argc, arg_t* argv);
+error_t _setChargeCurrent(int argc, arg_t* argv);
+error_t _meassyson(int argc, arg_t* argv);
+error_t _meassysoff(int argc, arg_t* argv);
 
 
 termcmd_t cmd_printStatus{
@@ -46,15 +50,15 @@ termcmd_t cmd_argtest{
 
 
 termcmd_t cmd_systemstatus{
-	"systemstatus",
-	"systemstatus",
+	"status",
+	"status",
 	"prints voltage, current values and charger status flags ",
 	_systemstatus
 };
 
 termcmd_t cmd_led1on{
 	"led1on",
-	"led1on",
+	"led1on [float:current] [float:pwm]",
 	"Turn LED 1 on ",
 	_led1on
 };
@@ -68,7 +72,7 @@ termcmd_t cmd_led1off{
 
 termcmd_t cmd_led2on{
 	"led2on",
-	"led2on",
+	"led2on [float:current] [float:pwm]",
 	"Turn LED 2 on ",
 	_led2on
 };
@@ -96,10 +100,41 @@ termcmd_t cmd_ledshowoff{
 
 termcmd_t cmd_send{
 	"send",
-	"send [message]",
+	"send [string:message]",
 	"Send message over radio",
 	_send
 };
+
+termcmd_t cmd_setChargeCurrent{
+	"setIcharge",
+	"setIcharge [float:current]",
+	"Set battery charge current in ampere.",
+	_setChargeCurrent
+};
+
+
+termcmd_t cmd_getChargeCurrent{
+	"getIcharge",
+	"getIcharge",
+	"Returns programmed charge current in ampere.",
+	_getChargeCurrent
+};
+
+termcmd_t cmd_meassyson{
+	"meassyson",
+	"meassyson",
+	"Forces LTC4015 measurement system on.",
+	_meassyson
+};
+
+termcmd_t cmd_meassysoff{
+	"meassysoff",
+	"meassysoff",
+	"Forces LTC4015 measurement system off in battery only mode.",
+	_meassysoff
+};
+
+
 
 /**
 * @brief prints name of commands and usage
@@ -137,8 +172,27 @@ error_t _systemstatus(int argc, arg_t* argv) {
 }
 
 error_t _led1on(int argc, arg_t* argv){
-    L1.setILed(0.1);
-    L1.on();
+	if(argc == 3){
+		float current = atof(argv[1].arg);
+		float pwm = atof(argv[2].arg);
+		L1.setILed(current);
+		L1.setPWM(pwm);
+		L1.on();
+	}
+	else if(argc == 2){
+		float current = atof(argv[1].arg);
+		L1.setILed(current);
+		L1.setPWM(0.5);
+		L1.on();
+	}
+	else if(argc == 1){
+		L1.setILed(0.1);
+		L1.setPWM(0.5);
+		L1.on();
+	}
+	else{
+		printf("command syntax wrong!");
+	}
     return E_SUCCESS;
 }
 
@@ -148,8 +202,27 @@ error_t _led1off(int argc, arg_t* argv){
 }
 
 error_t _led2on(int argc, arg_t* argv){
-    L2.setILed(0.1);
-    L2.on();
+	if(argc == 3){
+		float current = atof(argv[1].arg);
+		float pwm = atof(argv[2].arg);
+		L2.setILed(current);
+		L2.setPWM(pwm);
+		L2.on();
+	}
+	else if(argc == 2){
+		float current = atof(argv[1].arg);
+		L2.setILed(current);
+		L2.setPWM(0.5);
+		L2.on();
+	}
+	else if(argc == 1){
+		L2.setILed(0.1);
+		L2.setPWM(0.5);
+		L2.on();
+	}
+	else{
+		printf("command syntax wrong!");
+	}
     return E_SUCCESS;
 }
 
@@ -180,10 +253,46 @@ error_t _send(int argc, arg_t* argv){
     return E_SUCCESS;
 }
 
+error_t _getChargeCurrent(int argc, arg_t* argv){
+	if(argc >= 1){
+		float current = bat.getIcharge();
+		printf("\t %f A\n", current);
+	}
+	else{
+		printf("command syntax wrong!");
+	}
+	return E_SUCCESS;
+}
+
+error_t _setChargeCurrent(int argc, arg_t* argv){
+	if(argc >= 2){
+		float current = atof(argv[1].arg);
+		bat.setIcharge(current);
+		printf("Charge current set to %f A.\n",current);
+	}
+	else{
+		printf("command syntax wrong!");
+	}
+	return E_SUCCESS;
+}
+
+error_t _meassyson(int argc, arg_t* argv){
+    bat.forceMeasSysOn();
+    return E_SUCCESS;
+}
+
+error_t _meassysoff(int argc, arg_t* argv){
+    bat.forceMeasSysOff();
+    return E_SUCCESS;
+}
 
 
 
 /*** command list ***/
-termcmd_t *cmd_list[] = { &cmd_printStatus, &cmd_argtest, &cmd_systemstatus, &cmd_led1on, &cmd_led1off, &cmd_led2on, &cmd_led2off, &cmd_ledshowon, &cmd_ledshowoff, &cmd_send };
+termcmd_t *cmd_list[] = {	&cmd_printStatus, &cmd_argtest, &cmd_systemstatus, &cmd_led1on, \
+							&cmd_led1off, &cmd_led2on, &cmd_led2off, &cmd_ledshowon, \
+							&cmd_ledshowoff, &cmd_send, &cmd_setChargeCurrent, &cmd_getChargeCurrent, \
+							&cmd_meassyson, &cmd_meassysoff \
+						};
 const int cmdlist_len = (sizeof(cmd_list) / sizeof(termcmd_t*));
 
