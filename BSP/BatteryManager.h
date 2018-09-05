@@ -65,6 +65,28 @@
 #define QCOUNT 0x13
 #define CONFIG_BITS 0x14
 
+// Chemistry selector and cell count readout
+#define CHEM_CELLS 0x43
+
+// alerts
+#define EN_LIMIT_ALERTS 0x0D
+
+#define en_meas_sys_valid_alert 0x8000
+#define en_qcount_low_alert     0x2000
+#define en_qcount_high_alert    0x1000
+#define en_vbat_lo_alert        0x0800
+#define en_vbat_hi_alert        0x0400
+#define en_vin_lo_alert         0x0200
+#define en_vin_hi_alert         0x0100
+#define en_vsys_lo_alert        0x0080
+#define en_vsys_hi_alert        0x0040
+#define en_iin_hi_alert         0x0020
+#define en_ibat_lo_alert        0x0010
+#define en_die_temp_hi_alert    0x0008
+#define en_bsr_hi_alert         0x0004
+#define   en_ntc_ratio_hi_alert 0x0002
+#define en_ntc_ratio_lo_alert   0x0001
+
 
 
 
@@ -73,13 +95,12 @@ class BatteryManager{
 private:
     I2C *_i2c;
     InterruptIn *_Alert;
-    EventQueue *_queue;
-    Thread *_t;
+    volatile bool alertevent;
     int _devAddr;
     float _R_SNSI;
     float _R_SNSB;
     int _cellcount;
-    static void _serviceSMBAlert();
+    void _serviceSMBAlert();
 
 public: 
     BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert);
@@ -106,11 +127,16 @@ public:
     int setInputThresholds();
     int forceMeasSysOn();
     int forceMeasSysOff();
+    int setLimitAlert(int16_t alert);
+    int clearLimitAlert(int16_t alert);
+    bool getLimitAlert(int16_t alert);
+    int sampleMeasSys();
     uint16_t getChargerStatus();
     uint16_t getChargerState();
     uint16_t getSystemStatus();
     uint16_t getChargerConfig();
     uint16_t getConfig();
+    uint16_t getChemCells();
     void printStatus();
 };
 

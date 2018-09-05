@@ -12,7 +12,6 @@
 BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert){
     _i2c = new I2C(SDA,SCL);
     _Alert = new InterruptIn(SMBAlert);
-
     _devAddr = addr;
     // _queue = new EventQueue(32 * EVENTS_EVENT_SIZE);
     // _t = new Thread();
@@ -22,7 +21,7 @@ BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAl
     _cellcount = 1;
 
     // _t->start(callback(_queue, &EventQueue::dispatch_forever));
-    _Alert->fall(_queue->event(BatteryManager::_serviceSMBAlert));
+    _Alert->fall(callback(this, &BatteryManager::_serviceSMBAlert));
     // _Alert->fall(callback(this, &BatteryManager::serviceSMBAlert));
 
     setChargerParameter();
@@ -33,6 +32,7 @@ BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAl
 
 void BatteryManager::_serviceSMBAlert(){
     printf("\n\nSMBALERT MESSAGE!!\n\n");
+    alertevent = true;
 }
 
 
@@ -41,10 +41,11 @@ int BatteryManager::write(char reg, int16_t data){
                     (char)((data>>0)&0xFF), /* LB */
                     (char)((data>>8)&0xFF) }; /* HB */
     int error = 0;
-    error += (_i2c->write(_devAddr, tx, 4, false));
+    error += (_i2c->write(_devAddr, tx, 3, false));
     if (error == 0)
         return SUCCESS;
-    else return ERROR;
+    else 
+        return ERROR;
 }
 
 int BatteryManager::read(char reg, int16_t *rxdata){
@@ -55,7 +56,8 @@ int BatteryManager::read(char reg, int16_t *rxdata){
     *rxdata = (int16_t)((rx[1]<<8) + rx[0]);
     if (error == 0)
         return SUCCESS;
-    else return ERROR;
+    else 
+        return ERROR;
 }
 
 float BatteryManager::getBatTemp(){
@@ -233,11 +235,10 @@ int BatteryManager::setInputThresholds(){
 }
 
 int BatteryManager::forceMeasSysOn(){
-    // uint16_t data = 0x0000;
-    // this->read(CONFIG_BITS, (int16_t*)&data);
-    // data |= 0x0010;
-    // this->write(CONFIG_BITS, (int16_t)data);
-    this->write(CONFIG_BITS, 0xFFFF);
+    uint16_t data = 0x0000;
+    this->read(CONFIG_BITS, (int16_t*)&data);
+    data |= 0x0010;
+    this->write(CONFIG_BITS, (int16_t)data);
     return SUCCESS;
 }
 
@@ -246,6 +247,61 @@ int BatteryManager::forceMeasSysOff(){
     this->read(CONFIG_BITS, (int16_t*)&data);
     data &= ~(0x0010);
     this->write(CONFIG_BITS, (int16_t)data);
+    return SUCCESS;
+}
+
+int BatteryManager::setLimitAlert(int16_t alert){
+    uint16_t data = 0x0000;
+    this->read(EN_LIMIT_ALERTS, (int16_t*)&data);
+    data |= alert;
+    this->write(EN_LIMIT_ALERTS, data);
+    return SUCCESS;
+}
+
+int BatteryManager::clearLimitAlert(int16_t alert){
+    uint16_t data = 0x0000;
+    this->read(EN_LIMIT_ALERTS, (int16_t*)&data);
+    data &= ~alert;
+    this->write(EN_LIMIT_ALERTS, data);
+    return SUCCESS;
+}
+
+bool BatteryManager::getLimitAlert(int16_t alert){
+    uint16_t data = 0x0000;
+    this->read(EN_LIMIT_ALERTS, (int16_t*)&data);
+    data &= alert;
+    if(data == alert)
+        return true;
+    else 
+        return false;
+}
+
+int BatteryManager::sampleMeasSys(){
+    // en meas sys alert
+    setLimitAlert(en_meas_sys_valid_alert);
+    // force meas sys on
+    forceMeasSysOn();
+    // wait for smbalert
+    int t = 0;
+    while(alertevent == false){
+        wait_ms(1);
+        t++;
+        if(t>100)
+            break;
+    }
+    
+    alertevent = false;
+    // verify meas sys alert
+    if(getLimitAlert(en_meas_sys_valid_alert))
+        printf("en_meas_sys_valid_alert is true\n");
+    else
+        printf("en_meas_sys_valid_alert is false");
+
+    // disable meas sys alert
+    clearLimitAlert(en_meas_sys_valid_alert);
+    // disable force meas sys
+    forceMeasSysOff();
+    // read updated meas sys data from ltc4015
     return SUCCESS;
 }
 
@@ -280,12 +336,23 @@ uint16_t BatteryManager::getConfig(){
     return data; // Bits 0,..,8
 }
 
+/* Bit 8..11 selected chemistry
+ * Bit 4..7  reserved
+ * Bit 0..3  cell count
+ */
+uint16_t BatteryManager::getChemCells(){
+    uint16_t data = 0x0000;
+    this->read(CHEM_CELLS,(int16_t*)&data);
+    return data; // Bits 0,..,8
+}
+
 void BatteryManager::printStatus(){
     uint16_t charger_state = getChargerState();
     uint16_t charger_status = getChargerStatus();
     uint16_t system_status = getSystemStatus();
     uint16_t charger_config = getChargerConfig();
     uint16_t config = getConfig();
+    uint16_t chemcells = getChemCells();
 
     printf("\nLTC4015 Status Print:\n ------------------------\n");
 
@@ -333,7 +400,24 @@ void BatteryManager::printStatus(){
             (system_status & 0x08) >> 3, \
             (system_status & 0x04) >> 2, \
             (system_status & 0x02) >> 1, \
-            (system_status & 0x01) >> 0 );        
+            (system_status & 0x01) >> 0 );      
+
+    printf("Chemistry Selection:\t");
+    switch((chemcells >> 8) & 0x0F){
+        case 0: printf("Li-Ion Programmable\n"); break;
+        case 1: printf("Li-Ion Fixed 4.2V/cell\n"); break;
+        case 2: printf("Li-Ion Fixed 4.1V/cell\n"); break;
+        case 3: printf("Li-Ion Fixed 4.0V/cell\n"); break;
+        case 4: printf("LiFePo4 Programmable\n"); break;
+        case 5: printf("LiFePo4 Fixed Fast Charge\n"); break;
+        case 6: printf("LiFePo4 Fixed 3.6V/cell\n"); break;
+        case 7: printf("Lead-acid Fixed Programmable\n"); break;
+        case 8: printf("Lead-acid Programmable\n"); break;
+        default: printf("unknown chemistry\n"); break;
+    }
+    printf("\n");
+
+    printf("Cell Count:\t\t %d\n\n", chemcells & 0x0F);
 }
 
 
