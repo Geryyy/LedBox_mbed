@@ -38,7 +38,7 @@ Serial pc(USBTX, USBRX, 9600);
 Thread radioThread;
 Thread terminalThread;
 RFM98W radio(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 2, smp_frameReady, NULL, false);
-BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
+BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA, 1.1);
 LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
 LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
 

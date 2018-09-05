@@ -33,6 +33,8 @@ error_t _setChargeCurrent(int argc, arg_t* argv);
 error_t _meassyson(int argc, arg_t* argv);
 error_t _meassysoff(int argc, arg_t* argv);
 error_t _samplemeas(int argc, arg_t* argv);
+error_t _setSOC(int argc, arg_t* argv);
+error_t _getSOC(int argc, arg_t* argv);
 
 
 termcmd_t cmd_printStatus{
@@ -140,6 +142,20 @@ termcmd_t cmd_sampmeas{
 	"sampmeas",
 	"Samples LTC4015 measurement system.",
 	_samplemeas
+};
+
+termcmd_t cmd_setsoc{
+	"setSOC",
+	"setSOC [float:SOC]",
+	"Sets normalized battery state of charge.",
+	_setSOC
+};
+
+termcmd_t cmd_getsoc{
+	"getSOC",
+	"setSOC",
+	"Returns normalized battery state of charge.",
+	_getSOC
 };
 
 
@@ -299,13 +315,31 @@ error_t _samplemeas(int argc, arg_t* argv){
     return E_SUCCESS;
 }
 
+error_t _setSOC(int argc, arg_t* argv){
+	if(argc >= 2){
+		float soc = atof(argv[1].arg);
+		bat.setStateOfCharge(soc);
+		printf("State of Charge set to %f\n",soc);
+	}
+	else{
+		printf("command syntax wrong!");
+	}
+	return E_SUCCESS;
+}
+
+error_t _getSOC(int argc, arg_t* argv){
+    printf("State of Charge is %f.\n",bat.getStateOfCharge());
+    return E_SUCCESS;
+}
+
+
 
 
 /*** command list ***/
 termcmd_t *cmd_list[] = {	&cmd_printStatus, &cmd_argtest, &cmd_systemstatus, &cmd_led1on, \
 							&cmd_led1off, &cmd_led2on, &cmd_led2off, &cmd_ledshowon, \
 							&cmd_ledshowoff, &cmd_send, &cmd_setChargeCurrent, &cmd_getChargeCurrent, \
-							&cmd_meassyson, &cmd_meassysoff, &cmd_sampmeas \
+							&cmd_meassyson, &cmd_meassysoff, &cmd_sampmeas, &cmd_setsoc, &cmd_getsoc \
 						};
 const int cmdlist_len = (sizeof(cmd_list) / sizeof(termcmd_t*));
 

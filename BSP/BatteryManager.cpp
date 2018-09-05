@@ -9,7 +9,7 @@
 #include "BSP.h"
 #include "math.h"
 
-BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert){
+BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert, float BatCapacity_Ah){
     _i2c = new I2C(SDA,SCL);
     _Alert = new InterruptIn(SMBAlert);
     _devAddr = addr;
@@ -19,6 +19,7 @@ BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAl
     _R_SNSI = 0.01;
     _R_SNSB = 0.01;
     _cellcount = 1;
+    _bat_capacity_As = BatCapacity_Ah * 3600;
 
     // _t->start(callback(_queue, &EventQueue::dispatch_forever));
     _Alert->fall(callback(this, &BatteryManager::_serviceSMBAlert));
@@ -26,12 +27,12 @@ BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAl
 
     setChargerParameter();
     setInputThresholds();
-    forceMeasSysOn();
+    // forceMeasSysOn();
+    setCoulombCounterPrescaler();
 }
 
 
 void BatteryManager::_serviceSMBAlert(){
-    printf("\n\nSMBALERT MESSAGE!!\n\n");
     alertevent = true;
 }
 
@@ -120,7 +121,7 @@ int BatteryManager::setIcharge(float Icharge){
         uint16_t icharge_targ = uint16_t(Icharge*_R_SNSB/0.001 -1);
         this->write(ICHARGE_TARGET,icharge_targ);
 
-        printf("setIcharge(): ICHARGE_TARGET = %d\n",icharge_targ);
+        // printf("setIcharge(): ICHARGE_TARGET = %d\n",icharge_targ);
 
         return SUCCESS;
     }
@@ -148,6 +149,12 @@ int BatteryManager::setVcharge(float U){
         return ERROR;
 }
 
+float BatteryManager::getVcharge(){
+    int16_t vcharge = 0;
+    this->read(VCHARGE_SETTING, &vcharge);
+    return 3.4125 + (float)vcharge / 80.0;
+}
+
 int BatteryManager::setMaxCVTime(float hours){
     if(hours > 0.0 && hours < 18.0){
         uint16_t max_cv_time = uint16_t(hours*3600.0);
@@ -156,6 +163,12 @@ int BatteryManager::setMaxCVTime(float hours){
     }
     else
         return ERROR;
+}
+
+float BatteryManager::getMaxCVTime(){
+    int16_t maxcvtime = 0;
+    this->read(MAX_CV_TIME, &maxcvtime);
+    return (float)maxcvtime /3600.0;
 }
 
 int BatteryManager::setMaxChargeTime(float hours){
@@ -168,6 +181,12 @@ int BatteryManager::setMaxChargeTime(float hours){
         return ERROR;
 }
 
+float BatteryManager::getMaxChargeTime(){
+    int16_t maxchargetime = 0;
+    this->read(MAX_CHARGE_TIME, &maxchargetime);
+    return (float)maxchargetime /3600.0;
+}
+
 int BatteryManager::setLIFEPO4RechargeThreshold(float U){
     if(U > 0 && U < 4.2){
         int16_t lifepo45_recharge_theshold = int16_t(U/0.000192264);
@@ -178,10 +197,16 @@ int BatteryManager::setLIFEPO4RechargeThreshold(float U){
         return ERROR;
 }
 
+float BatteryManager::getLIFEPO4RechargeThreshold(){
+    int16_t lifepo45_recharge_theshold = 0;
+    this->read(LIFEP04_RECHARGE_THRESHOLD, &lifepo45_recharge_theshold);
+    return 0.000192264 * (float)lifepo45_recharge_theshold;
+}
+
 
 int BatteryManager::setIinLimit(float Iin){
     if(Iin > 0 && Iin <= 3.2){
-        uint16_t iin_limit_setting = uint16_t(Iin*0.0005/_R_SNSI);
+        uint16_t iin_limit_setting = uint16_t(Iin * _R_SNSI / 0.0005);
         iin_limit_setting &= 0x3F;
         this->write(IIN_LIMIT_SETTING, iin_limit_setting);
         return SUCCESS;
@@ -190,6 +215,11 @@ int BatteryManager::setIinLimit(float Iin){
         return ERROR;
 }
 
+float BatteryManager::getIinLimit(){
+    int16_t iin_limit = 0;
+    this->read(IIN_LIMIT_SETTING, &iin_limit);
+    return 0.0005 / _R_SNSI * (float)iin_limit;
+}
 
 int BatteryManager::setUVCL(float Uin){
     if(Uin > 0.0 && Uin <= 36.0){
@@ -199,10 +229,22 @@ int BatteryManager::setUVCL(float Uin){
         uint16_t vin_uvcl_setting = uint16_t(Uvcl_pin/0.0046875 - 1);
         vin_uvcl_setting &= 0xFF;
         this->write(VIN_UVCL_SETTING, vin_uvcl_setting);
+
+        // printf("setUVCL: %d\n",vin_uvcl_setting);
         return SUCCESS;
     }
     else
         return ERROR;
+}
+
+float BatteryManager::getUVCL(){
+    float R2B = 294.0; // kohm
+    float R4B = 10.0; // kohm
+    int16_t uvcl = 0;
+    this->read(VIN_UVCL_SETTING, &uvcl);
+    float Uvcl_pin = 0.0046875 * (float)(uvcl + 1);
+ 
+    return Uvcl_pin * (R2B + R4B) / R4B;
 }
 
 
@@ -286,7 +328,7 @@ int BatteryManager::sampleMeasSys(){
     while(alertevent == false){
         wait_ms(1);
         t++;
-        if(t>100)
+        if(t>200)
             break;
     }
     
@@ -304,6 +346,44 @@ int BatteryManager::sampleMeasSys(){
     // read updated meas sys data from ltc4015
     return SUCCESS;
 }
+
+/*** coulomb counter ***/
+float BatteryManager::q_lsb(){
+    return _qcount_prescaler / (K_QC * _R_SNSB); // amount of charge in As represented by the LSB
+}
+
+int BatteryManager::setCoulombCounterPrescaler(){
+    float q_lsb_max = _bat_capacity_As / 65535.0;
+    float prescaler = q_lsb_max * K_QC * _R_SNSB * 2.0; // times 2 for safety margin
+    _qcount_prescaler = (uint16_t) round(prescaler);
+    this->write(QCOUNT_PRESCALE_FACTOR,_qcount_prescaler);
+    
+    // printf("QCOUNT_PRESCALE_FACTOR: %d\n",_qcount_prescaler);
+
+    return SUCCESS;
+}
+
+int BatteryManager::setStateOfCharge(float SOC){
+    if(SOC > 1.0 || SOC < 0.0)
+        return ERROR;
+    uint16_t qcount =  (32768 * SOC) + 16384;
+    this->write(QCOUNT,qcount);
+    return SUCCESS;
+}
+
+float BatteryManager::getStateOfCharge(){
+    uint16_t qcount;
+    this->read(QCOUNT, (int16_t*)&qcount);
+    return (qcount - 16384) / 32768;
+}
+
+int  BatteryManager::enableCoulombCounter(){
+    /* todo */
+    return SUCCESS;
+}
+
+
+/*** LTC4015 status and config ***/
 
 uint16_t BatteryManager::getChargerStatus(){
     uint16_t data = 0x0000;
@@ -417,43 +497,7 @@ void BatteryManager::printStatus(){
     }
     printf("\n");
 
-    printf("Cell Count:\t\t %d\n\n", chemcells & 0x0F);
+    printf("Cell Count:\t\t%d\n\n", chemcells & 0x0F);
 }
 
 
-/*** Testfunktion ***/
-
-void BatteryTask(){
-    BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
-    char reg = 0x00;
-    int16_t rx = 0;
-    while(true){
-        bat.read(reg,&rx);
-        printf("register: %x \tvalue: %hx\n", reg, rx);
-        reg = (reg+1) % 0x50;
-        wait(0.5);
-    }
-}
-
-void BatteryTask2(){
-    BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA);
-    
-    bat.setIcharge(0.5);
-    printf("\n\nIchargeRel: %f\n\n",bat.getIcharge());
-
-    while(true){
-        bat.setIcharge(0.5);
-        printf("\n\nIchargeRel: %f\n\n",bat.getIcharge());
-
-        printf("Tbat: %f\t", bat.getBatTemp());
-        printf("Ubat: %f\t",bat.getUBat());
-        printf("Ibat: %f\t", bat.getIBat());
-        printf("Uin: %f\t", bat.getUin());
-        printf("Usys: %f\t", bat.getUsys());
-        printf("Iin: %f\t", bat.getIin());
-        printf("Tdie: %f\t", bat.getTdie());
-        printf("BatRes: %f\t",bat.getBatRes());
-        printf("\n");
-        wait(1);
-    }
-}

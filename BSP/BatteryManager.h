@@ -65,6 +65,8 @@
 #define QCOUNT 0x13
 #define CONFIG_BITS 0x14
 
+#define K_QC 8333.33
+
 // Chemistry selector and cell count readout
 #define CHEM_CELLS 0x43
 
@@ -84,7 +86,7 @@
 #define en_ibat_lo_alert        0x0010
 #define en_die_temp_hi_alert    0x0008
 #define en_bsr_hi_alert         0x0004
-#define   en_ntc_ratio_hi_alert 0x0002
+#define en_ntc_ratio_hi_alert   0x0002
 #define en_ntc_ratio_lo_alert   0x0001
 
 
@@ -100,10 +102,12 @@ private:
     float _R_SNSI;
     float _R_SNSB;
     int _cellcount;
+    uint16_t _qcount_prescaler;
+    float _bat_capacity_As;
     void _serviceSMBAlert();
 
 public: 
-    BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert);
+    BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert, float BatCapacity_Ah);
     
     int write(char reg, int16_t data);
     int read(char reg, int16_t *rxdata);
@@ -118,11 +122,17 @@ public:
     int setIcharge(float Icharge);
     float getIcharge();
     int setVcharge(float U);
+    float getVcharge();
     int setMaxCVTime(float hours);
+    float getMaxCVTime();
     int setMaxChargeTime(float hours);
+    float getMaxChargeTime();
     int setLIFEPO4RechargeThreshold(float U);
+    float getLIFEPO4RechargeThreshold();
     int setIinLimit(float Iin);
+    float getIinLimit();
     int setUVCL(float Uin);
+    float getUVCL();
     int setChargerParameter();
     int setInputThresholds();
     int forceMeasSysOn();
@@ -131,6 +141,13 @@ public:
     int clearLimitAlert(int16_t alert);
     bool getLimitAlert(int16_t alert);
     int sampleMeasSys();
+
+    float q_lsb();
+    int setCoulombCounterPrescaler();
+    int setStateOfCharge(float SOC);
+    float getStateOfCharge();
+    int  enableCoulombCounter();
+
     uint16_t getChargerStatus();
     uint16_t getChargerState();
     uint16_t getSystemStatus();
