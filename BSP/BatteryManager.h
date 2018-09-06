@@ -65,6 +65,13 @@
 #define QCOUNT 0x13
 #define CONFIG_BITS 0x14
 
+// CONFIG_BITS bitdefinition
+#define suspend_charger     0x0100 
+#define run_bsr             0x0020
+#define force_meas_sys_on   0x0010
+#define mppt_en_i2c         0x0008
+#define en_qcount           0x0004
+
 #define K_QC 8333.33
 
 // Chemistry selector and cell count readout
@@ -111,6 +118,7 @@ public:
     
     int write(char reg, int16_t data);
     int read(char reg, int16_t *rxdata);
+    int suspendCharger(bool suspend);
     float getBatTemp();
     float getUBat();
     float getIBat();
@@ -147,6 +155,7 @@ public:
     int setStateOfCharge(float SOC);
     float getStateOfCharge();
     int  enableCoulombCounter();
+    int disableCoulombCounter();
 
     uint16_t getChargerStatus();
     uint16_t getChargerState();

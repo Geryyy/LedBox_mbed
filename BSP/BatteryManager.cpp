@@ -29,6 +29,9 @@ BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAl
     setInputThresholds();
     // forceMeasSysOn();
     setCoulombCounterPrescaler();
+    enableCoulombCounter();
+    suspendCharger(false);
+    forceMeasSysOn();   /* Errata workaround */
 }
 
 
@@ -59,6 +62,23 @@ int BatteryManager::read(char reg, int16_t *rxdata){
         return SUCCESS;
     else 
         return ERROR;
+}
+
+int BatteryManager::suspendCharger(bool suspend){
+    uint16_t data = 0x0000;
+
+    if(suspend){
+        this->read(CONFIG_BITS, (int16_t*)&data);
+        data |= suspend_charger;
+        this->write(CONFIG_BITS, (int16_t)data);
+        return SUCCESS;
+    }
+    else{
+        this->read(CONFIG_BITS, (int16_t*)&data);
+        data &= ~(suspend_charger);
+        this->write(CONFIG_BITS, (int16_t)data);
+        return SUCCESS;
+    }
 }
 
 float BatteryManager::getBatTemp(){
@@ -226,7 +246,7 @@ int BatteryManager::setUVCL(float Uin){
         float R2B = 294.0; // kohm
         float R4B = 10.0; // kohm
         float Uvcl_pin = Uin * R4B / (R2B + R4B);
-        uint16_t vin_uvcl_setting = uint16_t(Uvcl_pin/0.0046875 - 1);
+        uint16_t vin_uvcl_setting = uint16_t(Uvcl_pin/0.0046875 - 1.0);
         vin_uvcl_setting &= 0xFF;
         this->write(VIN_UVCL_SETTING, vin_uvcl_setting);
 
@@ -279,7 +299,7 @@ int BatteryManager::setInputThresholds(){
 int BatteryManager::forceMeasSysOn(){
     uint16_t data = 0x0000;
     this->read(CONFIG_BITS, (int16_t*)&data);
-    data |= 0x0010;
+    data |= force_meas_sys_on;
     this->write(CONFIG_BITS, (int16_t)data);
     return SUCCESS;
 }
@@ -287,7 +307,7 @@ int BatteryManager::forceMeasSysOn(){
 int BatteryManager::forceMeasSysOff(){
     uint16_t data = 0x0000;
     this->read(CONFIG_BITS, (int16_t*)&data);
-    data &= ~(0x0010);
+    data &= ~(force_meas_sys_on);
     this->write(CONFIG_BITS, (int16_t)data);
     return SUCCESS;
 }
@@ -366,7 +386,7 @@ int BatteryManager::setCoulombCounterPrescaler(){
 int BatteryManager::setStateOfCharge(float SOC){
     if(SOC > 1.0 || SOC < 0.0)
         return ERROR;
-    uint16_t qcount =  (32768 * SOC) + 16384;
+    uint16_t qcount =  uint16_t((32768.0 * SOC) + 16384.0);
     this->write(QCOUNT,qcount);
     return SUCCESS;
 }
@@ -374,11 +394,22 @@ int BatteryManager::setStateOfCharge(float SOC){
 float BatteryManager::getStateOfCharge(){
     uint16_t qcount;
     this->read(QCOUNT, (int16_t*)&qcount);
-    return (qcount - 16384) / 32768;
+    return ((float)qcount - 16384.0) / 32768.0;
 }
 
 int  BatteryManager::enableCoulombCounter(){
-    /* todo */
+    uint16_t data = 0x0000;
+    this->read(CONFIG_BITS, (int16_t*)&data);
+    data |= en_qcount;
+    this->write(CONFIG_BITS, data);
+    return SUCCESS;
+}
+
+int BatteryManager::disableCoulombCounter(){
+    uint16_t data = 0x0000;
+    this->read(CONFIG_BITS, (int16_t*)&data);
+    data &= ~(en_qcount);
+    this->write(CONFIG_BITS, data);
     return SUCCESS;
 }
 
@@ -460,8 +491,7 @@ void BatteryManager::printStatus(){
             (charger_config & 0x0002) >> 1, \
             (charger_config & 0x0002) >> 0 );
 
-    printf("Config Bits:\t%x\nsuspend_charger:\t%d\nrun_bsr:\t\t%d\nforce_meas_sys_on:\t%d\nmppt_en_i2c:\t\t%d\nen_qcount:\t\t%d\n\n",\
-            config, \
+    printf("Config Bits:\nsuspend_charger:\t%d\nrun_bsr:\t\t%d\nforce_meas_sys_on:\t%d\nmppt_en_i2c:\t\t%d\nen_qcount:\t\t%d\n\n",\
             (config & 0x0100) >> 8, \
             (config & 0x0020) >> 5, \
             (config & 0x0010) >> 4, \
