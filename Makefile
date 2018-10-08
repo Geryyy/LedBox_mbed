@@ -46,6 +46,7 @@ PROJECT := LedBox_mbed
 ###############################################################################
 # Objects and Paths
 
+OBJECTS += ./com/com.o
 OBJECTS += ./terminal_conf.o
 OBJECTS += ./TerminalParser/terminal.o
 OBJECTS += ./radio/RFM98W.o
@@ -359,6 +360,7 @@ OBJECTS += ./mbed-os/targets/TARGET_STM/us_ticker_32b.o
 
 INCLUDE_PATHS += -I../
 INCLUDE_PATHS += -I../.
+INCLUDE_PATHS += -I.././com
 INCLUDE_PATHS += -I.././TerminalParser
 INCLUDE_PATHS += -I.././libsmp/c
 INCLUDE_PATHS += -I.././libfifo/c
@@ -446,7 +448,7 @@ PREPROC = 'arm-none-eabi-cpp' '-E' '-P' '-Wl,--gc-sections' '-Wl,--wrap,main' '-
 ELFSIZE = 'arm-none-eabi-size'
 
 
-C_FLAGS += -std=gnu99
+C_FLAGS += -std=gnu11
 C_FLAGS += -D__MBED__=1
 C_FLAGS += -DMBED_BUILD_TIMESTAMP=1516870091.08
 C_FLAGS += -DTARGET_LIKE_MBED
@@ -495,7 +497,7 @@ C_FLAGS += -DDEVICE_FLASH=1
 C_FLAGS += -include
 C_FLAGS += mbed_config.h
 
-CXX_FLAGS += -std=gnu++98
+CXX_FLAGS += -std=gnu++11
 CXX_FLAGS += -fno-rtti
 CXX_FLAGS += -Wvla
 CXX_FLAGS += -D__MBED__=1

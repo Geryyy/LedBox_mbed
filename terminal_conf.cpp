@@ -180,6 +180,8 @@ error_t _argtest(int argc, arg_t* argv) {
 * @brief prints name of commands and usage
 */
 error_t _systemstatus(int argc, arg_t* argv) {
+	
+	PrintSystemInformation();
     printf("System Status:\n");
     printf("Tbat:\t%4.1f C\nUbat:\t%4.2f V\nIbat:\t%4.3f A\nUin:\t%4.2f V\nUsys:\t%4.2f V\nIin:\t%4.3f A\nTdie:\t%4.1f C\n\r",\
         bat.getBatTemp(), \

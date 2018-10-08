@@ -16,13 +16,10 @@ void LEDTask(){
 
 void PrintSystemInformation(){
     printf("\nLED Box Status Infomation:\n");
-    while(true){
-        printf("ADC Temp = %f\n", getMCUTemp());
-        printf("ADC VRef = %f\n", getUrefCal());         
-        printf("SysVolt  = %f\n", getSysVoltage());
-        printf("\033[3A");
-        wait(1.0);
-    }
+    printf("ADC Temp = %f\n", getMCUTemp());
+    printf("ADC VRef = %f\n", getUrefCal());         
+    printf("SysVolt  = %f\n", getSysVoltage());
+    //printf("\033[3A");
 }
 
 
@@ -58,4 +55,12 @@ float getMCUTemp(){
     float Uref = getSysVoltage();
     float Temp = k * U_Traw * Uref + d;
     return Temp;
+}
+
+static DigitalOut Heater(PA_6);
+void setHeater(bool on){
+    if(on)
+        Heater.write(1);
+    else
+        Heater.write(0);
 }

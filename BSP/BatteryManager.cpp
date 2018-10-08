@@ -25,13 +25,14 @@ BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAl
     _Alert->fall(callback(this, &BatteryManager::_serviceSMBAlert));
     // _Alert->fall(callback(this, &BatteryManager::serviceSMBAlert));
 
+    forceMeasSysOn();   /* Errata workaround */
     setChargerParameter();
     setInputThresholds();
     // forceMeasSysOn();
     setCoulombCounterPrescaler();
     enableCoulombCounter();
     suspendCharger(false);
-    forceMeasSysOn();   /* Errata workaround */
+    
 }
 
 
