@@ -10,11 +10,13 @@
 #include <cstddef>
 #include "RFM98W.h"
 #include "TerminalParser/terminal.h"
+#include "com.h"
 
 void init();
 void BatteryTaskRadio();
 void radioTransceiveTask();
 void sendTestMsg();
+void sendTestHKD();
 void terminalTask();
 
 Thread LEDThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDThread");
@@ -41,6 +43,7 @@ RFM98W radio(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 2, smp_frameReady, NULL, fa
 BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA, 1.1);
 LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
 LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
+Com radiocom = Com();
 
 signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
 {
@@ -69,13 +72,14 @@ int main()
     init();
     // WatchdogThread.start(WatchdogTask);
     LEDThread.start(LEDTask);
-    // radioThread.start(radioTask);
+    radioThread.start(radioTask);
     terminalThread.start(terminalTask);
     // RadioThread.start(radioTransceiveTask); // transmit with ringbuffer  
 
     while(true) {
         wait(2);
         radio.stopreceive();
+        sendTestHKD();
         // bat.forceMeasSysOn();
     }
 }
@@ -97,6 +101,18 @@ void sendTestMsg(){
     radio.sendPacket(msg,strlen(msg));
     printf("Packet send\n");
     i++;
+}
+
+void sendTestHKD(){
+    static uint8_t hkd[128];
+    int len = radiocom.sendHKD(hkd,128);
+    if(len>0){
+        radio.sendPacket((char*)hkd,len);
+        printf("Packet send\n");
+    }
+    else{
+        printf("Buffer too small\n");
+    }
 }
 
 
