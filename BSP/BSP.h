@@ -53,6 +53,7 @@ void PrintSystemInformation();
 float getUrefCal();
 float getSysVoltage();
 float getMCUTemp();
+void setHeater(bool on);
 
 
 

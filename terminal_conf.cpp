@@ -35,6 +35,8 @@ error_t _meassysoff(int argc, arg_t* argv);
 error_t _samplemeas(int argc, arg_t* argv);
 error_t _setSOC(int argc, arg_t* argv);
 error_t _getSOC(int argc, arg_t* argv);
+error_t _setHeaterOn(int argc, arg_t* argv);
+error_t _setHeaterOff(int argc, arg_t* argv);
 
 
 termcmd_t cmd_printStatus{
@@ -158,6 +160,19 @@ termcmd_t cmd_getsoc{
 	_getSOC
 };
 
+termcmd_t cmd_heateron{
+	"heateron",
+	"heateron",
+	"Enables battery heater.",
+	_setHeaterOn
+};
+
+termcmd_t cmd_heateroff{
+	"heateroff",
+	"heateroff",
+	"Disables battery heater.",
+	_setHeaterOff
+};
 
 
 /**
@@ -334,6 +349,18 @@ error_t _getSOC(int argc, arg_t* argv){
     return E_SUCCESS;
 }
 
+error_t _setHeaterOn(int argc, arg_t* argv){
+	setHeater(true);
+	printf("Heater is on\n");
+	return E_SUCCESS;
+}
+
+error_t _setHeaterOff(int argc, arg_t* argv){
+	setHeater(false);
+	printf("Heater is off\n");
+	return E_SUCCESS;
+}
+
 
 
 
@@ -341,7 +368,8 @@ error_t _getSOC(int argc, arg_t* argv){
 termcmd_t *cmd_list[] = {	&cmd_printStatus, &cmd_argtest, &cmd_systemstatus, &cmd_led1on, \
 							&cmd_led1off, &cmd_led2on, &cmd_led2off, &cmd_ledshowon, \
 							&cmd_ledshowoff, &cmd_send, &cmd_setChargeCurrent, &cmd_getChargeCurrent, \
-							&cmd_meassyson, &cmd_meassysoff, &cmd_sampmeas, &cmd_setsoc, &cmd_getsoc \
+							&cmd_meassyson, &cmd_meassysoff, &cmd_sampmeas, &cmd_setsoc, &cmd_getsoc, \
+							&cmd_heateroff, &cmd_heateron
 						};
 const int cmdlist_len = (sizeof(cmd_list) / sizeof(termcmd_t*));
 
