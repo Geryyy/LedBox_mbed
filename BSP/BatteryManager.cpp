@@ -9,7 +9,8 @@
 #include "BSP.h"
 #include "math.h"
 
-BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert, float BatCapacity_Ah){
+BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert, float BatCapacity_Ah, bool debug){
+    _debug = debug;
     _i2c = new I2C(SDA,SCL);
     _Alert = new InterruptIn(SMBAlert);
     _devAddr = addr;
@@ -33,6 +34,123 @@ BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAl
     enableCoulombCounter();
     suspendCharger(false);
     
+}
+
+
+void BatteryManager::controller(float TZyklus){
+    const float Temp_low = 1.0; // [°C] heater is on
+    const float Temp_high = 3.0; // [°C] heater is off
+	const float T_bsr = 60.0; // [s] run bsr measurement
+	const float T_error = 2.0; // [s] time in error state
+    const float Ubat_min = 1.0; // [V] .. detect if bat is missing or broken
+
+    const uint16_t charger_state = getChargerState();
+	const uint16_t iabsorb_charge = (charger_state & 0x200) >> 9;
+	const uint16_t iprecharge = (charger_state & 0x80) >> 7;
+    const uint16_t icc_cv_charge = (charger_state & 0x40) >> 6;
+    const uint16_t ibatmissing = (charger_state & 0x02) >> 1;
+    const uint16_t ibatshort = (charger_state & 0x01) >> 0;
+    const uint16_t icharging = iabsorb_charge + iprecharge + icc_cv_charge;
+ 
+    const float iTempBat = getBatTemp();
+    const float iUbat = getUBat();
+
+	static float t = 0.0;
+	static state_t state = INIT;
+	static state_t mstate = INIT;
+
+
+
+	do{
+#if LIBRE_DEBUG
+		printf("t = %f\n",t);
+#endif
+
+		if(state == INIT){
+			state = READY;
+            // set charger parameter
+
+		}
+
+        /* error handling */
+        else if(ibatmissing > 0 || ibatshort > 0){
+            state = ERR;
+        }
+        else if(state == ERR && t > T_error){
+            state = READY;
+        }
+
+        /* normal operation */
+        else if(state == READY && iUbat < Ubat_min){
+            // check if battery is present via measured battery voltage
+            state = BATMISSING;
+        }
+        else if(state == BATMISSING && t>0.0){
+            state = READY;
+        }
+        else if(state == READY && iTempBat < Temp_low){
+            state = HEAT;
+        }
+        else if(state == READY && iTempBat > Temp_high && icharging > 0){
+            state = CHARGE;
+        }
+		else if(state == HEAT && iTempBat > Temp_high){
+            state = READY;
+        }
+        else if(state == CHARGE && !icharging){
+            state = READY;
+            setStateOfCharge(1.0); // battery if fully charged at this state
+        }
+        else if(state == CHARGE && t > T_bsr){
+            state = RUN_BSR;
+            runBSR();
+        }
+        else if(state == RUN_BSR && t>0){
+            state = CHARGE;
+            bsr = getBatRes();
+            if(_debug){
+                printf("bsr: %f\n\n",bsr);
+            }
+        }
+		//else;
+
+		/* time in current state */
+		if(state != mstate)
+			t = 0.0;
+		else
+			t = t + TZyklus;
+
+		/* update state marker */
+		mstate = state;
+
+	}while(state != mstate);
+
+    /* state dependent actions */
+	if(state == ERR){
+		suspendCharger(true);
+	}
+
+    if(state == HEAT){
+        suspendCharger(true);
+    }
+
+    if(state == READY){
+        suspendCharger(false);
+    }
+
+    /* update measurement values */
+    soc = getStateOfCharge();
+    
+    /* debug */
+    if(_debug){
+        printf("battery controller\n\tstate: %d\n\tsoc:  %f\n\n",state,soc);
+        // printf("iTempBat: %f\n icharging: %d\n\n",iTempBat, icharging);
+        // printf("icc_cv_charge: %d\n ",icc_cv_charge);
+        // printf("iabsorb_charge  : %d\n ",iabsorb_charge);
+        // printf("iprecharge: %d\n ",iprecharge);
+        
+    }
+
 }
 
 
@@ -129,12 +247,6 @@ float BatteryManager::getTdie(){
     int16_t tdie = 0;
     this->read(DIE_TEMP, &tdie);
     return ((float)tdie - 12010.0)/45.6;
-}
-
-float BatteryManager::getBatRes(){
-    int16_t bsr;
-    this->read(BSR, &bsr);
-    return (float)bsr * _R_SNSB / 500.0 * (float)_cellcount;
 }
 
 int BatteryManager::setIcharge(float Icharge){
@@ -412,6 +524,22 @@ int BatteryManager::disableCoulombCounter(){
     data &= ~(en_qcount);
     this->write(CONFIG_BITS, data);
     return SUCCESS;
+}
+
+/*** BSR ***/
+
+int BatteryManager::runBSR(){
+    uint16_t data = 0x0000;
+    this->read(CONFIG_BITS, (int16_t*)&data);
+    data |= run_bsr;
+    this->write(CONFIG_BITS, data);
+    return SUCCESS;
+}
+
+float BatteryManager::getBatRes(){
+    int16_t bsr;
+    this->read(BSR, &bsr);
+    return (float)bsr * _R_SNSB / 500.0 * (float)_cellcount;
 }
 
 

@@ -65,6 +65,9 @@
 #define QCOUNT 0x13
 #define CONFIG_BITS 0x14
 
+// BSR
+#define BSR 0x41
+
 // CONFIG_BITS bitdefinition
 #define suspend_charger     0x0100 
 #define run_bsr             0x0020
@@ -97,11 +100,21 @@
 #define en_ntc_ratio_lo_alert   0x0001
 
 
+typedef enum state_e{
+	ERR = 0,
+    INIT,
+	READY,
+    BATMISSING,
+	HEAT,
+	CHARGE,
+	RUN_BSR
+} state_t;
 
 
 
 class BatteryManager{
 private:
+    bool _debug;
     I2C *_i2c;
     InterruptIn *_Alert;
     volatile bool alertevent;
@@ -112,13 +125,24 @@ private:
     uint16_t _qcount_prescaler;
     float _bat_capacity_As;
     void _serviceSMBAlert();
+    
+
+public:
+    float bsr;
+    float soc;
+
 
 public: 
-    BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert, float BatCapacity_Ah);
-    
+    BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert, float BatCapacity_Ah, bool debug);
+    void controller(float TZyklus);
+    void printStatus();
+
+private:
     int write(char reg, int16_t data);
     int read(char reg, int16_t *rxdata);
     int suspendCharger(bool suspend);
+
+public:
     float getBatTemp();
     float getUBat();
     float getIBat();
@@ -126,7 +150,7 @@ public:
     float getUsys();
     float getIin();
     float getTdie();
-    float getBatRes();
+    
     int setIcharge(float Icharge);
     float getIcharge();
     int setVcharge(float U);
@@ -157,18 +181,17 @@ public:
     int  enableCoulombCounter();
     int disableCoulombCounter();
 
+    int runBSR();
+    float getBatRes();
+
+private:
     uint16_t getChargerStatus();
     uint16_t getChargerState();
     uint16_t getSystemStatus();
     uint16_t getChargerConfig();
     uint16_t getConfig();
     uint16_t getChemCells();
-    void printStatus();
+
 };
-
-/*** Testfunktion ***/
-
-void BatteryTask(void);
-void BatteryTask2(void);
 
 #endif // BATTERYMANAGER_H

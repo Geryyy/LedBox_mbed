@@ -18,14 +18,7 @@ void radioTransceiveTask();
 void sendTestMsg();
 void sendTestHKD();
 void terminalTask();
-
-Thread LEDThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDThread");
-// Thread SysPrintThread(osPriorityNormal, OS_STACK_SIZE,NULL,"SysPrintThread");
-// Thread RadioThread(osPriorityNormal, 8*1024,NULL,"RadioThread");
-Thread LEDdriverThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDdriverThread");
-// Thread BatteryThread(osPriorityNormal, OS_STACK_SIZE,NULL,"BatteryThread");
-Thread WatchdogThread(osPriorityNormal, OS_STACK_SIZE,NULL,"WatchdogThread");
-
+void SystemTask();
 
 signed char rxCallback(fifo_t *buffer){
     return 0;
@@ -37,10 +30,15 @@ signed char smp_frameReady(fifo_t* buffer);
 
 
 Serial pc(USBTX, USBRX, 9600);
+Thread LEDdriverThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDdriverThread");
+Thread LEDThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDThread");
+Thread WatchdogThread(osPriorityNormal, OS_STACK_SIZE,NULL,"WatchdogThread");
+Thread SystemThread(osPriorityNormal, OS_STACK_SIZE,NULL,"SystemThread");
 Thread radioThread;
 Thread terminalThread;
+
 RFM98W radio(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 2, smp_frameReady, NULL, false);
-BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA, 1.1);
+BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA, 1.1, true);
 LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
 LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
 Com radiocom = Com();
@@ -74,12 +72,13 @@ int main()
     LEDThread.start(LEDTask);
     radioThread.start(radioTask);
     terminalThread.start(terminalTask);
+    SystemThread.start(SystemTask);
     // RadioThread.start(radioTransceiveTask); // transmit with ringbuffer  
 
     while(true) {
         wait(2);
         radio.stopreceive();
-        sendTestHKD();
+        // sendTestHKD();
         // bat.forceMeasSysOn();
     }
 }
@@ -116,6 +115,15 @@ void sendTestHKD(){
 }
 
 
+void SystemTask(){
+    float TZyklus = 4.0;
+
+    while(true){
+        // send hkd 
+        bat.controller(TZyklus); // battery manager
+        wait(TZyklus);
+    }
+}
 
 
 
