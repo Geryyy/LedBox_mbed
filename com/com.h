@@ -3,7 +3,7 @@
 
 
 typedef struct LaserSetting_s{
-    char packetID = 128; 
+    uint8_t packetID; /* 129 */
     bool Laser1on;
     bool Laser2on;
     float Laser1dutycycle;
@@ -37,6 +37,6 @@ private:
 
 public:
     Com(void);
-    int updateLaserSettings(LEDdriver *L1, LEDdriver *L2);
+    int updateLaserSettings(uint8_t * data, int len);
     int sendHKD(uint8_t *data, uint32_t maxlen);
 };

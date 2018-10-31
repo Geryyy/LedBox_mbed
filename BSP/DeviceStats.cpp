@@ -54,3 +54,11 @@ void printDeviceStats(){
     printf("\tLow Power reset:         %ld\n",resetCounter.LPRST);
 
 }
+
+int32_t getSoftwareReset(){
+    return resetCounter.SWRST;
+}
+
+int32_t getPowerOnReset(){
+    return resetCounter.PORRST;
+}

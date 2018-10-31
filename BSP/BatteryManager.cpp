@@ -251,7 +251,7 @@ float BatteryManager::getTdie(){
 
 int BatteryManager::setIcharge(float Icharge){
     if(Icharge > 0.0 && Icharge <= 32.0*0.001/_R_SNSB){ // 0.0 < Icharge <= 3.2A
-        uint16_t icharge_targ = uint16_t(Icharge*_R_SNSB/0.001 -1);
+        uint16_t icharge_targ = uint16_t(Icharge*_R_SNSB/0.001 );
         this->write(ICHARGE_TARGET,icharge_targ);
 
         // printf("setIcharge(): ICHARGE_TARGET = %d\n",icharge_targ);
@@ -383,7 +383,7 @@ float BatteryManager::getUVCL(){
 
 int BatteryManager::setChargerParameter(){
     // ICHARGE_TARGET;
-    setIcharge(0.5);
+    setIcharge(1.0);
     // VABSORB_DELTA;
     // MAX_ABSORB_TIME;
     // VCHARGE_SETTING;

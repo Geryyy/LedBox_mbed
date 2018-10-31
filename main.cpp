@@ -43,15 +43,40 @@ LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
 LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
 Com radiocom = Com();
 
+#define DATASIZE 128
+uint8_t data[DATASIZE];
+
 signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
 {
     int32_t len = fifo_datasize(buffer);
     printf("radio smp rx:\t");
+
+    bool read = false;
+    int j = 0;
+
     for(int i = 0; i<len; i++){
         uint8_t ch;
         fifo_read_byte(&ch,buffer);
         printf("%c",ch);
+
+        if(ch == 129){
+            read = true;
+        }
+        if(read){
+            data[j] = ch;
+            j++;
+        }
     }
+    radiocom.updateLaserSettings(data,j);
+
+    printf("bytes %d\n",len);
+    // if(len < DATASIZE){
+    //     // fifo_read_bytes(data,buffer,len);
+    //     radiocom.updateLaserSettings(data,len);
+    // }
+    // else
+    //     fprintf(stderr, "error smp_frameReady(): len > DATASIZE\n");
+
     printf("\n");
     return len;
 }
@@ -78,7 +103,7 @@ int main()
     while(true) {
         wait(2);
         radio.stopreceive();
-        // sendTestHKD();
+        sendTestHKD();
         // bat.forceMeasSysOn();
     }
 }

@@ -22,4 +22,7 @@ void procResetCounter();
 void clearResetCounter();
 void printDeviceStats();
 
+int32_t getSoftwareReset();
+int32_t getPowerOnReset();
+
 #endif // DEVICESTATS_H

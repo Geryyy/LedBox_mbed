@@ -54,6 +54,7 @@ float getUrefCal();
 float getSysVoltage();
 float getMCUTemp();
 void setHeater(bool on);
+bool getheaterstate();
 
 
 

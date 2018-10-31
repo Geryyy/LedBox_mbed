@@ -58,9 +58,16 @@ float getMCUTemp(){
 }
 
 static DigitalOut Heater(PA_6);
+bool heaterstate;
+
 void setHeater(bool on){
+    heaterstate = on;
     if(on)
         Heater.write(1);
     else
         Heater.write(0);
+}
+
+bool getheaterstate(){
+    return heaterstate;
 }
