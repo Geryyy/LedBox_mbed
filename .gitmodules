@@ -11,3 +11,6 @@
 [submodule "libsmp"]
 	path = libsmp
 	url = https://github.com/Freshdouble/libsmp.git
+[submodule "mbed-os"]
+	path = mbed-os
+	url = https://github.com/ARMmbed/mbed-os.git
