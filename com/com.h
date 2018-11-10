@@ -11,7 +11,7 @@ typedef struct LaserSetting_s{
     bool OOKenable;
     uint32_t OOKpattern;
     float OOKfrequency;
-}LaserSetting_t;
+} __attribute__ ((packed)) LaserSetting_t;
 
 typedef struct hkd_s{
     uint8_t id;
