@@ -5,3 +5,12 @@
 [submodule "TerminalParser"]
 	path = TerminalParser
 	url = https://gitlab.com/geryyy/TerminalParser.git
+[submodule "libfifo"]
+	path = libfifo
+	url = https://github.com/Freshdouble/libfifo.git
+[submodule "libsmp"]
+	path = libsmp
+	url = https://github.com/Freshdouble/libsmp.git
+[submodule "mbed-os"]
+	path = mbed-os
+	url = https://github.com/ARMmbed/mbed-os.git
