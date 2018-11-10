@@ -57,7 +57,7 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
     for(int i = 0; i<len; i++){
         uint8_t ch;
         fifo_read_byte(&ch,buffer);
-        printf("%c",ch);
+        printf("%x",ch);
 
         if(ch == 129){
             read = true;
