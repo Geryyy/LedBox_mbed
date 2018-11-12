@@ -4,11 +4,11 @@
 
 typedef struct LaserSetting_s{
     uint8_t packetID; /* 129 */
-    bool Laser1on;
-    bool Laser2on;
+    uint8_t Laser1on;
+    uint8_t Laser2on;
     float Laser1dutycycle;
     float Laser2dutycycle;
-    bool OOKenable;
+    uint8_t OOKenable;
     uint32_t OOKpattern;
     float OOKfrequency;
 } __attribute__ ((packed)) LaserSetting_t;

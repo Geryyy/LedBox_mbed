@@ -49,7 +49,7 @@ uint8_t data[DATASIZE];
 signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
 {
     int32_t len = fifo_datasize(buffer);
-    printf("radio smp rx:\t");
+    //printf("radio smp rx:\t");
 
     bool read = false;
     int j = 0;
@@ -57,7 +57,8 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
     for(int i = 0; i<len; i++){
         uint8_t ch;
         fifo_read_byte(&ch,buffer);
-        printf("%x",ch);
+        //printf("%x",ch);
+        // putchar(ch);
 
         if(ch == 129){
             read = true;
@@ -67,9 +68,10 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
             j++;
         }
     }
+    printf("\n");
     radiocom.updateLaserSettings(data,j);
 
-    printf("bytes %d\n",len);
+    //printf("bytes %d\n",len);
     // if(len < DATASIZE){
     //     // fifo_read_bytes(data,buffer,len);
     //     radiocom.updateLaserSettings(data,len);
@@ -77,7 +79,7 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
     // else
     //     fprintf(stderr, "error smp_frameReady(): len > DATASIZE\n");
 
-    printf("\n");
+    //printf("\n");
     return len;
 }
 
@@ -103,7 +105,7 @@ int main()
     while(true) {
         wait(2);
         radio.stopreceive();
-        sendTestHKD();
+        // sendTestHKD();
         // bat.forceMeasSysOn();
     }
 }
@@ -127,15 +129,15 @@ void sendTestMsg(){
     i++;
 }
 
-void sendTestHKD(){
+void sendHKD(){
     static uint8_t hkd[128];
     int len = radiocom.sendHKD(hkd,128);
     if(len>0){
         radio.sendPacket((char*)hkd,len);
-        printf("Packet send\n");
+        //printf("Packet send\n");
     }
     else{
-        printf("Buffer too small\n");
+        //printf("Buffer too small\n");
     }
 }
 
@@ -144,7 +146,7 @@ void SystemTask(){
     float TZyklus = 4.0;
 
     while(true){
-        // send hkd 
+        sendHKD(); 
         bat.controller(TZyklus); // battery manager
         wait(TZyklus);
     }
