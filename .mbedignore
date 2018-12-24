@@ -1,0 +1,13 @@
+.tempt/
+.vscode/
+tools/
+Scripts/
+libsmp/.settings/
+libsmp/dll/
+libsmp/c/main.c
+libsmp/dllManaged/
+libsmp/libRS/
+libsmp/test/
+TerminalParser/terminal_conf_template.cpp
+Matlab/
+test/
