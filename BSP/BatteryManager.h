@@ -110,6 +110,7 @@ typedef enum state_e{
 	RUN_BSR
 } state_t;
 
+
 typedef struct batdata_s{
     float voltage;
     float current; 

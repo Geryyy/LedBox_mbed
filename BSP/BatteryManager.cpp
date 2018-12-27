@@ -8,6 +8,17 @@
 #include "mbed.h"
 #include "BSP.h"
 #include "math.h"
+#include <string>
+
+char* state2str[] = {
+    "ERR",
+    "INIT",
+	"READY",
+    "BATMISSING",
+	"HEAT",
+	"CHARGE",
+	"RUN_BSR"
+};
 
 BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAlert, float BatCapacity_Ah, bool debug){
     _debug = debug;
@@ -57,7 +68,7 @@ void BatteryManager::controller(float TZyklus){
 
 	do{
         if(_debug){
-		    printf("t = %f\n",t);
+		    printf("state: %s\tt = %f\n",state2str[state],t);
         }
 
 		if(state == INIT){
