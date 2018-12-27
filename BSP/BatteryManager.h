@@ -110,6 +110,19 @@ typedef enum state_e{
 	RUN_BSR
 } state_t;
 
+typedef struct batdata_s{
+    float voltage;
+    float current; 
+    float temperature;
+    float pvvoltage;
+    float sysvoltage;
+    float chargecurrent;
+    float inputcurrent;
+    float dietemperature;
+    float batteryresistance;
+    float stateofcharge;
+}batdata_t;
+
 
 
 class BatteryManager{
@@ -128,8 +141,7 @@ private:
     
 
 public:
-    float bsr;
-    float soc;
+    batdata_t data;
 
 
 public: 

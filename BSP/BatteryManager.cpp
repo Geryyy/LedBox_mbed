@@ -14,26 +14,20 @@ BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAl
     _i2c = new I2C(SDA,SCL);
     _Alert = new InterruptIn(SMBAlert);
     _devAddr = addr;
-    // _queue = new EventQueue(32 * EVENTS_EVENT_SIZE);
-    // _t = new Thread();
 
     _R_SNSI = 0.01;
     _R_SNSB = 0.01;
     _cellcount = 1;
     _bat_capacity_As = BatCapacity_Ah * 3600;
 
-    // _t->start(callback(_queue, &EventQueue::dispatch_forever));
     _Alert->fall(callback(this, &BatteryManager::_serviceSMBAlert));
-    // _Alert->fall(callback(this, &BatteryManager::serviceSMBAlert));
 
-    forceMeasSysOn();   /* Errata workaround */
+    // forceMeasSysOn();   /* Errata workaround */
     setChargerParameter();
     setInputThresholds();
-    // forceMeasSysOn();
     setCoulombCounterPrescaler();
     enableCoulombCounter();
     suspendCharger(false);
-    
 }
 
 
@@ -62,14 +56,13 @@ void BatteryManager::controller(float TZyklus){
 
 
 	do{
-#if LIBRE_DEBUG
-		printf("t = %f\n",t);
-#endif
+        if(_debug){
+		    printf("t = %f\n",t);
+        }
 
 		if(state == INIT){
 			state = READY;
             // set charger parameter
-
 		}
 
         /* error handling */
@@ -107,10 +100,6 @@ void BatteryManager::controller(float TZyklus){
         }
         else if(state == RUN_BSR && t>0){
             state = CHARGE;
-            bsr = getBatRes();
-            if(_debug){
-                printf("bsr: %f\n\n",bsr);
-            }
         }
 		//else;
 
@@ -138,19 +127,20 @@ void BatteryManager::controller(float TZyklus){
         suspendCharger(false);
     }
 
-    /* update measurement values */
-    soc = getStateOfCharge();
-    
-    /* debug */
-    if(_debug){
-        printf("battery controller\n\tstate: %d\n\tsoc:  %f\n\n",state,soc);
-        // printf("iTempBat: %f\n icharging: %d\n\n",iTempBat, icharging);
-        // printf("icc_cv_charge: %d\n ",icc_cv_charge);
-        // printf("iabsorb_charge  : %d\n ",iabsorb_charge);
-        // printf("iprecharge: %d\n ",iprecharge);
-        
-    }
 
+    // update battery data
+    if(state != ERR){
+        data.voltage = getUBat();
+        data.current = getIBat();
+        data.temperature = getBatTemp();
+        data.pvvoltage = getUin();
+        data.sysvoltage = getSysVoltage();
+        data.chargecurrent = getIcharge();
+        data.inputcurrent = getIin();
+        data.dietemperature = getTdie();
+        data.batteryresistance = getBatRes();
+        data.stateofcharge = getStateOfCharge();
+    }
 }
 
 

@@ -1,8 +1,8 @@
 {
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
-    "version": "0.1.0",
-    "name": "make",
+    "version": "0.1.1",
+    "name": "mbed",
     "isShellCommand": true,
     "showOutput": "always",
     "problemMatcher": {
@@ -17,14 +17,14 @@
             "message": 5
         }
     },
-    "args": ["-j"],
+    "args":  ["compile", "--profile=debug", "-t", "GCC_ARM", "-m", "NUCLEO_L152RE"],
     "linux": {
-        "command": "make"
+        "command": "mbed"
     },
     "osx": {
-        "command": "make"
+        "command": "mbed"
     },
     "windows": {
-        "command": "make.exe"
+        "command": "mbed"
     }
 }

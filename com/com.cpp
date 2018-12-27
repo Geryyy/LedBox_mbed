@@ -51,7 +51,7 @@ int Com::updateLaserSettings(uint8_t * data, int len){
         LaserSetting_t *ls = (LaserSetting_t*)(data); // +1 for ID byte
         if(ls->packetID == 129){
             //printf("Lasersettings received\n");
-            printLaserSettings(ls);
+            // printLaserSettings(ls);
             writeLaserSettings(ls,&L1,&L2);
         }            
         else{
@@ -67,18 +67,18 @@ int Com::updateLaserSettings(uint8_t * data, int len){
 
 int Com::sendHKD(uint8_t *data, uint32_t maxlen){
     hkd.id = 128;
-    hkd.batteryVoltage = bat.getUBat();
-    hkd.batteryCurrent = bat.getIBat();
-    hkd.batteryTemperature = bat.getBatTemp();
-    hkd.pVVoltage = bat.getUin();
-    hkd.loadCurrent = bat.getIcharge();
-    hkd.boxTemperature = getMCUTemp();
+    hkd.batteryVoltage = bat.data.voltage;
+    hkd.batteryCurrent = bat.data.current;
+    hkd.batteryTemperature = bat.data.temperature;
+    hkd.pVVoltage = bat.data.pvvoltage;
+    hkd.loadCurrent = bat.data.chargecurrent;
+    hkd.boxTemperature = bat.data.temperature;
     hkd.heaterState = getheaterstate();
     hkd.mCUReset = getPowerOnReset();
     hkd.rSSI_GS = 0.0;
     hkd.rSSI_Box = 0.0;
-    hkd.batteryResistance = bat.bsr;
-    hkd.coloumbcounter = bat.soc;
+    hkd.batteryResistance = bat.data.batteryresistance;
+    hkd.coloumbcounter = bat.data.stateofcharge;
 
     if(maxlen >= sizeof(hkd)){
         memcpy(data,&hkd,sizeof(hkd));

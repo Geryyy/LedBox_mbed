@@ -199,13 +199,13 @@ error_t _systemstatus(int argc, arg_t* argv) {
 	PrintSystemInformation();
     printf("System Status:\n");
     printf("Tbat:\t%4.1f C\nUbat:\t%4.2f V\nIbat:\t%4.3f A\nUin:\t%4.2f V\nUsys:\t%4.2f V\nIin:\t%4.3f A\nTdie:\t%4.1f C\n\r",\
-        bat.getBatTemp(), \
-        bat.getUBat(), \
-        bat.getIBat(),
-        bat.getUin(),\
-        bat.getUsys(),\
-        bat.getIin(),\
-        bat.getTdie() );
+        bat.data.temperature, \
+        bat.data.voltage, \
+        bat.data.current, \
+        bat.data.pvvoltage,\
+        bat.data.sysvoltage,\
+        bat.data.inputcurrent,\
+        bat.data.dietemperature );
 
     printf("Battery Charger Status:\n");
 	bat.printStatus();
