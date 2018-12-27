@@ -46,9 +46,9 @@ LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
 LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
 Com radiocom = Com();
 
-DigitalOut StatusLed1(LED1,1);
-DigitalOut StatusLed2(LED2,1);
-DigitalOut StatusLed3(LED3,1);
+DigitalOut StatusLed1(PC_12,1);
+DigitalOut StatusLed2(PC_11,1);
+DigitalOut StatusLed3(PC_10,1);
 
 #define DATASIZE 128
 uint8_t data[DATASIZE];
