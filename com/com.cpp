@@ -7,7 +7,7 @@
 #include "DeviceStats.h"
 
 extern Serial pc;
-extern RFM98W radio;
+// extern RFM98W radio;
 extern BatteryManager bat;
 extern LEDdriver L1;
 extern LEDdriver L2;

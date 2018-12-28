@@ -8,7 +8,7 @@
 #include "RFM98W.h"
 
 extern Serial pc;
-extern RFM98W radio;
+// extern RFM98W radio;
 extern BatteryManager bat;
 extern LEDdriver L1;
 extern LEDdriver L2;
@@ -285,7 +285,8 @@ error_t _ledshowoff(int argc, arg_t* argv){
 error_t _send(int argc, arg_t* argv){
 	if(argc > 1){
 		for (int i = 1; i < argc; i++) {
-			radio.sendPacket(argv[i].arg,strlen(argv[i].arg));
+			#warning implement radio
+			// radio.sendPacket(argv[i].arg,strlen(argv[i].arg));
 		}
 	}
 	else{
