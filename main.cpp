@@ -28,6 +28,7 @@ signed char rxCallback(fifo_t *buffer){
 
 /****************** MAIN **********************/
 signed char smp_frameReady(fifo_t* buffer);
+signed char smp_rogueframeReady(fifo_t* buffer);
 
 
 Serial pc(USBTX, USBRX, 9600);
@@ -42,7 +43,7 @@ LowPowerTicker RadioTicker;
 LowPowerTicker SystemTicker;
 
 RFM98W radiophy(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 0, false);
-Radio radio(NULL,NULL,&radiophy,true);
+Radio radio(smp_frameReady,smp_rogueframeReady,&radiophy,true);
 
 BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA, 1.1, false);
 LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
@@ -55,6 +56,13 @@ DigitalOut StatusLed3(PC_10,1);
 
 #define DATASIZE 128
 uint8_t data[DATASIZE];
+
+signed char smp_rogueframeReady(fifo_t* buffer){
+    static int i = 0;
+
+    printf("\n-->smp rogue frame callback!! i=%d\n",i);
+    i++;
+}
 
 signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
 {
@@ -74,6 +82,9 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
             j++;
         }
     }
+    static int i = 0;
+    printf("\n-->smp frame received!! i=%d\n",i);
+    i++;
     // printf("\n");
     StatusLed1 = !StatusLed1;
     radiocom.updateLaserSettings(data,j);
@@ -90,14 +101,17 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
 //     }
 // }
 
+float radioTZyklus = 0.5;
+
 void radioTask(){
     StatusLed2 = !StatusLed2;
-    if(radio.hasreceived()){
-        char msg[256];
-        int len = radio.readPacket(msg,255);
-        msg[len] = '\0';
-        printf("rx msg: %s\n",msg);
-    }
+    // if(radio.hasreceived()){
+    //     char msg[256];
+    //     int len = radio.readPacket(msg,255);
+    //     msg[len] = '\0';
+    //     printf("rx msg: %s\n",msg);
+    // }
+    radio.run(radioTZyklus);
 }
 
 void SystemTask(){
@@ -126,14 +140,14 @@ int main()
 
     init();
 
-    RadioTicker.attach(radioevents.event(&radioTask),0.2);
+    RadioTicker.attach(radioevents.event(&radioTask),radioTZyklus);
     SystemTicker.attach(systemevents.event(&SystemTask),1);
     
     while(true) {
         wait(2);
         char* msg = "Hello World";
-        radio.sendPacket(msg,strlen(msg));
-        // radio.stopreceive();
+        // radio.sendPacket(msg,strlen(msg));
+
     }
 }
 
