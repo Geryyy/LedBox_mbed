@@ -41,7 +41,7 @@ Thread WatchdogThread(osPriorityNormal, OS_STACK_SIZE,NULL,"WatchdogThread");
 LowPowerTicker RadioTicker;
 LowPowerTicker SystemTicker;
 
-RFM98W radiophy(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 0, true);
+RFM98W radiophy(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 0, false);
 Radio radio(NULL,NULL,&radiophy,true);
 
 BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA, 1.1, false);
@@ -90,10 +90,15 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
 //     }
 // }
 
-// void radioTask(){
-//     StatusLed2 = !StatusLed2;
-//     radio.serviceRadio();
-// }
+void radioTask(){
+    StatusLed2 = !StatusLed2;
+    if(radio.hasreceived()){
+        char msg[256];
+        int len = radio.readPacket(msg,255);
+        msg[len] = '\0';
+        printf("rx msg: %s\n",msg);
+    }
+}
 
 void SystemTask(){
     const float TZyklus = 1.0;
@@ -116,12 +121,12 @@ int main()
     Thread systemThread;
     EventQueue radioevents;
     EventQueue systemevents;
-    // radioThread.start(callback(&radioevents, &EventQueue::dispatch_forever));
+    radioThread.start(callback(&radioevents, &EventQueue::dispatch_forever));
     systemThread.start(callback(&systemevents, &EventQueue::dispatch_forever));
 
     init();
 
-    // RadioTicker.attach(radioevents.event(&radioTask),0.2);
+    RadioTicker.attach(radioevents.event(&radioTask),0.2);
     SystemTicker.attach(systemevents.event(&SystemTask),1);
     
     while(true) {
