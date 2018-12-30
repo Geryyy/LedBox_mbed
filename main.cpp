@@ -14,6 +14,9 @@
 #include "com.h"
 #include "logprintf.h"
 
+/* for LOG and WARNING */
+#define MODULE_NAME "MAIN"
+
 // void init();
 // void BatteryTaskRadio();
 // void radioTransceiveTask();
@@ -61,7 +64,7 @@ uint8_t data[DATASIZE];
 signed char smp_rogueframeReady(fifo_t* buffer){
     static int i = 0;
 
-    xprintf("\n-->smp rogue frame callback!! i=%d\n",i);
+    LOG("\n-->smp rogue frame callback!! i=%d\n",i);
     i++;
 }
 
@@ -84,7 +87,7 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
         }
     }
     static int i = 0;
-    xprintf("\n-->smp frame received!! i=%d\n",i);
+    LOG("\n-->smp frame received!! i=%d\n",i);
     i++;
     // xprintf("\n");
     StatusLed1 = !StatusLed1;
