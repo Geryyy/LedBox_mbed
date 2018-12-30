@@ -44,7 +44,7 @@ LowPowerTicker RadioTicker;
 LowPowerTicker SystemTicker;
 
 RFM98W radiophy(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 0, false);
-Radio radio(smp_frameReady,smp_rogueframeReady,&radiophy,true);
+Radio radio(smp_frameReady,smp_rogueframeReady,&radiophy, Radio::remote, true);
 
 BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA, 1.1, false);
 LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
