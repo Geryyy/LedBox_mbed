@@ -98,11 +98,14 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
 void sendHKD(){
     static uint8_t hkd[128];
     int len = radiocom.sendHKD(hkd,128);
+    
     if(len>0){
         radio.sendPacket((char*)hkd,len);
     }
     else{
     }
+    /* debug */
+    radiocom.printHKD();
 }
 
 float radioTZyklus = 0.5;

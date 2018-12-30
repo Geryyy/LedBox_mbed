@@ -39,4 +39,5 @@ public:
     Com(void);
     int updateLaserSettings(uint8_t * data, int len);
     int sendHKD(uint8_t *data, uint32_t maxlen);
+    void printHKD();
 };

@@ -5,6 +5,7 @@
 #include "BatteryManager.h"
 #include "RFM98W.h"
 #include "DeviceStats.h"
+#include "logprintf.h"
 
 extern Serial pc;
 // extern RFM98W radio;
@@ -18,7 +19,7 @@ extern Thread LEDdriverThread;
 }
 
 void printLaserSettings(LaserSetting_t *ls){
-    printf("Laser1on: %d \t\tLaser2on: %d \nLaser1dc: %f \tLaser2dc: %f \nOOKenable: %d \t\tOOKpattern: %ld \tOOKfreq: %f\n\n",\
+    xprintf("Laser1on: %d \t\tLaser2on: %d \nLaser1dc: %f \tLaser2dc: %f \nOOKenable: %d \t\tOOKpattern: %ld \tOOKfreq: %f\n\n",\
     ls->Laser1on, \
     ls->Laser2on, \
     ls->Laser1dutycycle, \
@@ -63,6 +64,23 @@ int Com::updateLaserSettings(uint8_t * data, int len){
         printf("error: len = %d, sizeof(LaserSetting_t) = %d\n",len,sizeof(LaserSetting_t));
 
     return 0;
+}
+
+
+void Com::printHKD(){
+        xprintf("Ubat=%4.1f\nIbat=%4.1f\nTbat=%4.1f\nUpv=%4.1f\nIload=%4.1f\nTbox=%4.1f\nHeaterstate=%d\nResetcount=%d\nRSSI_GS=%4.1f\nRSSI_Box=%4.1f\nBSR=%4.1f\nSOC=%4.1f\n", \
+            hkd.batteryVoltage, \
+            hkd.batteryCurrent,  \
+            hkd.batteryTemperature, \
+            hkd.pVVoltage, \
+            hkd.loadCurrent, \
+            hkd.boxTemperature, \
+            hkd.heaterState, \
+            hkd.mCUReset, \
+            hkd.rSSI_GS, \
+            hkd.rSSI_Box, \
+            hkd.batteryResistance, \
+            hkd.coloumbcounter);
 }
 
 int Com::sendHKD(uint8_t *data, uint32_t maxlen){
