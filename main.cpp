@@ -12,6 +12,7 @@
 #include "Radio.h"
 #include "TerminalParser/terminal.h"
 #include "com.h"
+#include "logprintf.h"
 
 // void init();
 // void BatteryTaskRadio();
@@ -60,7 +61,7 @@ uint8_t data[DATASIZE];
 signed char smp_rogueframeReady(fifo_t* buffer){
     static int i = 0;
 
-    printf("\n-->smp rogue frame callback!! i=%d\n",i);
+    xprintf("\n-->smp rogue frame callback!! i=%d\n",i);
     i++;
 }
 
@@ -83,25 +84,26 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
         }
     }
     static int i = 0;
-    printf("\n-->smp frame received!! i=%d\n",i);
+    xprintf("\n-->smp frame received!! i=%d\n",i);
     i++;
-    // printf("\n");
+    // xprintf("\n");
     StatusLed1 = !StatusLed1;
     radiocom.updateLaserSettings(data,j);
     return len;
 }
 
-// void sendHKD(){
-//     static uint8_t hkd[128];
-//     int len = radiocom.sendHKD(hkd,128);
-//     if(len>0){
-//         radio.sendPacket((char*)hkd,len);
-//     }
-//     else{
-//     }
-// }
+void sendHKD(){
+    static uint8_t hkd[128];
+    int len = radiocom.sendHKD(hkd,128);
+    if(len>0){
+        radio.sendPacket((char*)hkd,len);
+    }
+    else{
+    }
+}
 
 float radioTZyklus = 0.5;
+float systemTZyklus = 6.0;
 
 void radioTask(){
     StatusLed2 = !StatusLed2;
@@ -109,21 +111,21 @@ void radioTask(){
     //     char msg[256];
     //     int len = radio.readPacket(msg,255);
     //     msg[len] = '\0';
-    //     printf("rx msg: %s\n",msg);
+    //     xprintf("rx msg: %s\n",msg);
     // }
     radio.run(radioTZyklus);
 }
 
 void SystemTask(){
-    const float TZyklus = 1.0;
-    // sendHKD(); 
+    const float TZyklus = systemTZyklus;
+    sendHKD(); 
     bat.controller(TZyklus); // battery manager
     StatusLed3 = !StatusLed3;
 }
 
 void init(){
-    printf("LED Box Rev 0.1\nGerald Ebmer (c) 2018\nACIN TU WIEN\n\n");
-    printf("System Clock: %ld\n", SystemCoreClock);
+    xprintf("LED Box Rev 0.1\nGerald Ebmer (c) 2018\nACIN TU WIEN\n\n");
+    xprintf("System Clock: %ld\n", SystemCoreClock);
     // procResetCounter();
     // printDeviceStats();
 }
@@ -141,11 +143,12 @@ int main()
     init();
 
     RadioTicker.attach(radioevents.event(&radioTask),radioTZyklus);
-    SystemTicker.attach(systemevents.event(&SystemTask),1);
+    SystemTicker.attach(systemevents.event(&SystemTask),systemTZyklus);
     
     while(true) {
-        wait(2);
-        char* msg = "Hello World";
+        wait(0.01);
+        printOnTerminal(); // display log output (xprint)
+        // char* msg = "Hello World";
         // radio.sendPacket(msg,strlen(msg));
 
     }
@@ -155,11 +158,11 @@ int main()
 
 void terminalTask(){
     char *cmdstring;
-	printf("TerminalParser 0.1\n\n");
+	xprintf("TerminalParser 0.1\n\n");
 
     while(true){
 
-        printf("\nenter command: \n");
+        xprintf("\nenter command: \n");
 		cmdstring = getline();
 
 		if (strcmp(cmdstring, "exit\n") == 0)
@@ -169,4 +172,5 @@ void terminalTask(){
         wait(0.1);
     }
 }
+
 
