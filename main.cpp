@@ -36,27 +36,23 @@ signed char smp_rogueframeReady(fifo_t* buffer);
 
 
 Serial pc(USBTX, USBRX, 9600);
-// Thread LEDdriverThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDdriverThread");
-// Thread LEDThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDThread");
-Thread WatchdogThread(osPriorityNormal, OS_STACK_SIZE,NULL,"WatchdogThread");
-// Thread SystemThread(osPriorityNormal, OS_STACK_SIZE,NULL,"SystemThread");
-// Thread radioThread;
-// Thread terminalThread;
 
-LowPowerTicker RadioTicker;
-LowPowerTicker SystemTicker;
+
+Thread terminalThread;
+
+
 
 RFM98W radiophy(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 0, false);
-Radio radio(smp_frameReady,smp_rogueframeReady,&radiophy, Radio::remote, true);
+Radio radio(smp_frameReady,smp_rogueframeReady,&radiophy, Radio::remote, false);
 
-BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA, 1.1, false);
+BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA, 20.0, false);
 LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
 LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
 Com radiocom = Com();
 
 DigitalOut StatusLed1(PC_12,1);
-DigitalOut StatusLed2(PC_11,1);
-DigitalOut StatusLed3(PC_10,1);
+// DigitalOut StatusLed2(PC_11,1);
+// DigitalOut StatusLed3(PC_10,1);
 
 #define DATASIZE 128
 uint8_t data[DATASIZE];
@@ -90,7 +86,7 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
     LOG("\n-->smp frame received!! i=%d\n",i);
     i++;
     // xprintf("\n");
-    StatusLed1 = !StatusLed1;
+    // StatusLed1 = !StatusLed1;
     radiocom.updateLaserSettings(data,j);
     return len;
 }
@@ -112,13 +108,7 @@ float radioTZyklus = 0.5;
 float systemTZyklus = 6.0;
 
 void radioTask(){
-    StatusLed2 = !StatusLed2;
-    // if(radio.hasreceived()){
-    //     char msg[256];
-    //     int len = radio.readPacket(msg,255);
-    //     msg[len] = '\0';
-    //     xprintf("rx msg: %s\n",msg);
-    // }
+    // StatusLed2 = !StatusLed2;
     radio.run(radioTZyklus);
 }
 
@@ -126,11 +116,17 @@ void SystemTask(){
     const float TZyklus = systemTZyklus;
     sendHKD(); 
     bat.controller(TZyklus); // battery manager
-    StatusLed3 = !StatusLed3;
+    // StatusLed3 = !StatusLed3;
+}
+
+void BlinkTask(){
+    StatusLed1 = 0; // on
+    wait_ms(20);
+    StatusLed1 = 1; // off
 }
 
 void init(){
-    xprintf("LED Box Rev 0.1\nGerald Ebmer (c) 2018\nACIN TU WIEN\n\n");
+    xprintf("LED Box Rev 1.0\nGerald Ebmer (c) 2018\nACIN TU WIEN\n\n");
     xprintf("System Clock: %ld\n", SystemCoreClock);
     // procResetCounter();
     // printDeviceStats();
@@ -139,24 +135,34 @@ void init(){
 
 int main()
 {   
-    Thread radioThread;
-    Thread systemThread;
+    Thread radioThread(osPriorityNormal, OS_STACK_SIZE,NULL,"RadioThread");
+    Thread systemThread(osPriorityNormal, OS_STACK_SIZE,NULL,"SystemThread");
+    Thread watchdogThread(osPriorityNormal, OS_STACK_SIZE,NULL,"WatchdogThread");
+    Thread statusLEDThread(osPriorityNormal, OS_STACK_SIZE,NULL,"StatusLEDThread");
+
     EventQueue radioevents;
     EventQueue systemevents;
+    EventQueue statusevents;
+
     radioThread.start(callback(&radioevents, &EventQueue::dispatch_forever));
     systemThread.start(callback(&systemevents, &EventQueue::dispatch_forever));
+    statusLEDThread.start(callback(&statusevents,&EventQueue::dispatch_forever));
+    watchdogThread.start(WatchdogTask);
 
     init();
 
+    LowPowerTicker RadioTicker;
+    LowPowerTicker SystemTicker;
+    LowPowerTicker StatusLEDTicker;
+
     RadioTicker.attach(radioevents.event(&radioTask),radioTZyklus);
     SystemTicker.attach(systemevents.event(&SystemTask),systemTZyklus);
+    StatusLEDTicker.attach(statusevents.event(&BlinkTask),2.0);
     
     while(true) {
-        wait(0.01);
-        printOnTerminal(); // display log output (xprint)
-        // char* msg = "Hello World";
-        // radio.sendPacket(msg,strlen(msg));
-
+        wait(0.1);
+        // printOnTerminal(); // display xprint output
+        sleep();
     }
 }
 

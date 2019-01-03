@@ -141,6 +141,7 @@ void BatteryManager::controller(float TZyklus){
 
     // update battery data
     if(state != ERR){
+        sampleMeasSys(); // force measurement, in battery operation measurement system is usually off
         data.voltage = getUBat();
         data.current = getIBat();
         data.temperature = getBatTemp();

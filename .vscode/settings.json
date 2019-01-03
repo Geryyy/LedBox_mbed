@@ -13,6 +13,7 @@
         "type_traits": "cpp",
         "xutility": "cpp",
         "istream": "cpp",
-        "array": "cpp"
+        "array": "cpp",
+        "*.tcc": "cpp"
     }
 }
