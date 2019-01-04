@@ -17,42 +17,25 @@
 /* for LOG and WARNING */
 #define MODULE_NAME "MAIN"
 
-// void init();
-// void BatteryTaskRadio();
-// void radioTransceiveTask();
-// void sendTestMsg();
-// void sendTestHKD();
-// void terminalTask();
-// void SystemTask();
-
-signed char rxCallback(fifo_t *buffer){
-    return 0;
-}
-/*** TASKS ***/
-
 /****************** MAIN **********************/
+bool _debugSMPCallbacks = false;
+bool _debug = true;
+
 signed char smp_frameReady(fifo_t* buffer);
 signed char smp_rogueframeReady(fifo_t* buffer);
 
-
 Serial pc(USBTX, USBRX, 9600);
-
-
-Thread terminalThread;
-
-
-
 RFM98W radiophy(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 0, false);
 Radio radio(smp_frameReady,smp_rogueframeReady,&radiophy, Radio::remote, false);
-
 BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA, 20.0, false);
 LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
 LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
-Com radiocom = Com();
+Com radiocom = Com(false);
 
 DigitalOut StatusLed1(PC_12,1);
-// DigitalOut StatusLed2(PC_11,1);
-// DigitalOut StatusLed3(PC_10,1);
+DigitalOut StatusLed2(PC_11,1);
+DigitalOut StatusLed3(PC_10,1);
+DigitalIn StatusButton(USER_BUTTON);
 
 #define DATASIZE 128
 uint8_t data[DATASIZE];
@@ -60,7 +43,8 @@ uint8_t data[DATASIZE];
 signed char smp_rogueframeReady(fifo_t* buffer){
     static int i = 0;
 
-    LOG("\n-->smp rogue frame callback!! i=%d\n",i);
+    if(_debugSMPCallbacks)
+        LOG("\n-->smp rogue frame callback!! i=%d\n",i);
     i++;
 }
 
@@ -83,10 +67,10 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
         }
     }
     static int i = 0;
-    LOG("\n-->smp frame received!! i=%d\n",i);
+    if(_debugSMPCallbacks)
+        LOG("\n-->smp frame received!! i=%d\n",i);
     i++;
-    // xprintf("\n");
-    // StatusLed1 = !StatusLed1;
+    /* write settings to LED Driver */
     radiocom.updateLaserSettings(data,j);
     return len;
 }
@@ -100,8 +84,10 @@ void sendHKD(){
     }
     else{
     }
-    /* debug */
-    radiocom.printHKD();
+    
+    if(_debug){
+        radiocom.printHKD();
+    }
 }
 
 float radioTZyklus = 0.5;
@@ -123,15 +109,34 @@ void BlinkTask(){
     StatusLed1 = 0; // on
     wait_ms(20);
     StatusLed1 = 1; // off
+
+    // show battery state of charge
+    if(StatusButton == 0){
+        if(bat.data.stateofcharge > 0.75){
+            StatusLed1 = 0;
+        }
+        if(bat.data.stateofcharge > 0.5){
+            StatusLed2 = 0;
+        }
+        if(bat.data.stateofcharge > 0.25){
+            StatusLed3 = 0;
+        }
+    }
+    else{
+        StatusLed1 = 1; // off
+        StatusLed2 = 1; 
+        StatusLed3 = 1;
+    }
 }
 
 void init(){
     xprintf("LED Box Rev 1.0\nGerald Ebmer (c) 2018\nACIN TU WIEN\n\n");
     xprintf("System Clock: %ld\n", SystemCoreClock);
-    // procResetCounter();
-    // printDeviceStats();
+    procResetCounter();
+    printDeviceStats();
 }
 
+void terminalTask();
 
 int main()
 {   
@@ -139,6 +144,8 @@ int main()
     Thread systemThread(osPriorityNormal, OS_STACK_SIZE,NULL,"SystemThread");
     Thread watchdogThread(osPriorityNormal, OS_STACK_SIZE,NULL,"WatchdogThread");
     Thread statusLEDThread(osPriorityNormal, OS_STACK_SIZE,NULL,"StatusLEDThread");
+    /* Thread EventQueue and LowPowerTicker for PowerLED OOK is used in com Module */
+    // Thread terminalThread;
 
     EventQueue radioevents;
     EventQueue systemevents;
@@ -158,10 +165,12 @@ int main()
     RadioTicker.attach(radioevents.event(&radioTask),radioTZyklus);
     SystemTicker.attach(systemevents.event(&SystemTask),systemTZyklus);
     StatusLEDTicker.attach(statusevents.event(&BlinkTask),2.0);
+
+    // terminalThread.start(terminalTask);
     
     while(true) {
         wait(0.1);
-        // printOnTerminal(); // display xprint output
+        printOnTerminal(); // display xprint output
         sleep();
     }
 }
@@ -170,15 +179,15 @@ int main()
 
 void terminalTask(){
     char *cmdstring;
-	xprintf("TerminalParser 0.1\n\n");
+	xprintf("TerminalParser\n\n");
 
     while(true){
 
         xprintf("\nenter command: \n");
 		cmdstring = getline();
-
-		if (strcmp(cmdstring, "exit\n") == 0)
-			break;
+        xprintf("getline: %s\n",cmdstring);
+		// if (strcmp(cmdstring, "exit\n") == 0)
+		// 	break;
 		procTerminalString(cmdstring, cmd_list);
         free(cmdstring);
         wait(0.1);

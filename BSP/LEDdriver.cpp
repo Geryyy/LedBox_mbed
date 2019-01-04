@@ -10,12 +10,11 @@
 
 LEDdriver::LEDdriver(PinName pin_shdn, PinName pin_pwm, PinName pin_iLed){
     shdn = new DigitalOut(pin_shdn);
-    pwm = new PwmOut(pin_pwm);
+    pwm = new DigitalOut(pin_pwm,0);
     iLed = new AnalogOut(pin_iLed);
 
     this->off(); 
     this->setILed(1.0); // 1A LED Strom
-    this->setPWM(0.5); // 50% Dutycycle
 }
 
 int LEDdriver::on(void){
@@ -37,47 +36,42 @@ int LEDdriver::setILed(float val){
         return ERROR;
 }
 
-int LEDdriver::setPWM(float val){
-    if(val>=0.0 && val <= 1.0){
-        pwm->write(val);
-        pwm->period_ms(1);
-        return SUCCESS;
-    }   
-    else
-        return ERROR;
+int LEDdriver::setPWM(bool on){
+    pwm->write(!on);
+    return SUCCESS;
 }
 
 
-/*** Testfunktion ***/
+// /*** Testfunktion ***/
 
-extern LEDdriver L1;
-extern LEDdriver L2;
+// extern LEDdriver L1;
+// extern LEDdriver L2;
 
-void LEDdriverTask(){
-    printf("LEDdriver Task gestartet\n");
-    // LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
-    // LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
-    float I_LED = 0.1;
+// void LEDdriverTask(){
+//     printf("LEDdriver Task gestartet\n");
+//     // LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
+//     // LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
+//     float I_LED = 0.1;
 
-    L1.setILed(0.0); // 50mA
-    L1.setPWM(0.0);
-    L1.on();
+//     L1.setILed(0.0); // 50mA
+//     L1.setPWM(0.0);
+//     L1.on();
 
-    L2.setILed(0.0); // 50mA
-    L2.setPWM(0.0);
-    L2.on();
+//     L2.setILed(0.0); // 50mA
+//     L2.setPWM(0.0);
+//     L2.on();
 
-    float t = 0.0;
+//     float t = 0.0;
 
-    while(true){
-        wait(0.01);
-         float val = I_LED*(1.0 + sin(2*M_PI*1*t))/2.0;
-         L1.setILed(val);
-         val = I_LED*(1.0 + cos(2*M_PI*1*t))/2.0;
-         L2.setILed(val);
-         t = t + 0.01;
-    }
-}
+//     while(true){
+//         wait(0.01);
+//          float val = I_LED*(1.0 + sin(2*M_PI*1*t))/2.0;
+//          L1.setILed(val);
+//          val = I_LED*(1.0 + cos(2*M_PI*1*t))/2.0;
+//          L2.setILed(val);
+//          t = t + 0.01;
+//     }
+// }
 
 /*** Messwerte ***/
 /*

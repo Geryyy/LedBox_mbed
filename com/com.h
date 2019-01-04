@@ -34,9 +34,17 @@ class Com{
 private:
     LaserSetting_t lasersettings;
     hkd_t hkd;
+    LowPowerTicker OOK_ISR;
+    uint32_t ook_pattern;
+    bool _debug;
+
+private:
+    void OOK(void);
+    void printLaserSettings();
+    void writeLaserSettings(LEDdriver *L1, LEDdriver *L2);
 
 public:
-    Com(void);
+    Com(bool debug);
     int updateLaserSettings(uint8_t * data, int len);
     int sendHKD(uint8_t *data, uint32_t maxlen);
     void printHKD();

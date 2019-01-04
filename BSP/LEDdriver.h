@@ -12,13 +12,13 @@
 class LEDdriver{
 private:
     DigitalOut *shdn;
-    PwmOut *pwm;
+    DigitalOut *pwm;
     AnalogOut *iLed;
 
 public:
     LEDdriver(PinName pin_shdn, PinName pin_pwm, PinName pin_iLed);
     int setILed(float val);
-    int setPWM(float val);
+    int setPWM(bool on);
     int on(void);
     int off(void);
 };
