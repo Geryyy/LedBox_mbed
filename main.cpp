@@ -13,9 +13,14 @@
 #include "TerminalParser/terminal.h"
 #include "com.h"
 #include "logprintf.h"
+#include "DS1820.h"
 
 /* for LOG and WARNING */
 #define MODULE_NAME "MAIN"
+
+/* DS18b20 Temperature Sensor: Box Temperature */
+#define DATA_PIN PA_9
+#define VDD_PIN PA_8
 
 /****************** MAIN **********************/
 bool _debugSMPCallbacks = false;
@@ -31,11 +36,15 @@ BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA, 20.0, false);
 LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
 LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
 Com radiocom = Com(false);
+// DS1820 probe(DATA_PIN);
+// DigitalOut VDDPin(VDD_PIN);
 
 DigitalOut StatusLed1(PC_12,1);
 DigitalOut StatusLed2(PC_11,1);
 DigitalOut StatusLed3(PC_10,1);
 DigitalIn StatusButton(USER_BUTTON);
+
+float BoxTemperature;
 
 #define DATASIZE 128
 uint8_t data[DATASIZE];
@@ -46,6 +55,7 @@ signed char smp_rogueframeReady(fifo_t* buffer){
     if(_debugSMPCallbacks)
         LOG("\n-->smp rogue frame callback!! i=%d\n",i);
     i++;
+    return 0;
 }
 
 signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
@@ -103,6 +113,11 @@ void SystemTask(){
     sendHKD(); 
     bat.controller(TZyklus); // battery manager
     // StatusLed3 = !StatusLed3;
+    // VDDPin = 1;
+    // probe.convertTemperature(true, DS1820::all_devices);         //Start temperature conversion, wait until ready
+    // BoxTemperature = probe.temperature();
+    // VDDPin = 0;
+    BoxTemperature = 22.0;//getMCUTemp();
 }
 
 void BlinkTask(){

@@ -13,6 +13,7 @@ extern BatteryManager bat;
 extern LEDdriver L1;
 extern LEDdriver L2;
 extern Thread LEDdriverThread;
+extern float BoxTemperature;
 
  Com::Com(bool debug){
      _debug = debug;
@@ -129,7 +130,7 @@ int Com::sendHKD(uint8_t *data, uint32_t maxlen){
     hkd.batteryTemperature = bat.data.temperature;
     hkd.pVVoltage = bat.data.pvvoltage;
     hkd.loadCurrent = bat.data.chargecurrent;
-    hkd.boxTemperature = bat.data.temperature;
+    hkd.boxTemperature = BoxTemperature;
     hkd.heaterState = getheaterstate();
     hkd.mCUReset = getPowerOnReset();
     hkd.rSSI_GS = 0.0;
