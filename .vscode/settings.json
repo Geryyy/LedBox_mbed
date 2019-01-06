@@ -12,6 +12,8 @@
         "initializer_list": "cpp",
         "type_traits": "cpp",
         "xutility": "cpp",
-        "istream": "cpp"
+        "istream": "cpp",
+        "array": "cpp",
+        "*.tcc": "cpp"
     }
 }

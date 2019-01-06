@@ -43,8 +43,8 @@ BatteryManager::BatteryManager(int addr, PinName SDA, PinName SCL, PinName SMBAl
 
 
 void BatteryManager::controller(float TZyklus){
-    const float Temp_low = 1.0; // [°C] heater is on
-    const float Temp_high = 3.0; // [°C] heater is off
+    const float Temp_low = 3.0; // [°C] heater is on
+    const float Temp_high = 6.0; // [°C] heater is off
 	const float T_bsr = 60.0; // [s] run bsr measurement
 	const float T_error = 2.0; // [s] time in error state
     const float Ubat_min = 1.0; // [V] .. detect if bat is missing or broken
@@ -132,6 +132,10 @@ void BatteryManager::controller(float TZyklus){
 
     if(state == HEAT){
         suspendCharger(true);
+        setHeater(true);
+    }
+    else{
+        setHeater(false);
     }
 
     if(state == READY){
@@ -141,6 +145,7 @@ void BatteryManager::controller(float TZyklus){
 
     // update battery data
     if(state != ERR){
+        sampleMeasSys(); // force measurement, in battery operation measurement system is usually off
         data.voltage = getUBat();
         data.current = getIBat();
         data.temperature = getBatTemp();
@@ -384,18 +389,18 @@ float BatteryManager::getUVCL(){
 
 int BatteryManager::setChargerParameter(){
     // ICHARGE_TARGET;
-    setIcharge(1.0);
+    setIcharge(3.2);
     // VABSORB_DELTA;
     // MAX_ABSORB_TIME;
     // VCHARGE_SETTING;
-    setVcharge(3.6); // max ladespannung 3.6V
+    setVcharge(3.6); // max charge voltage
     // MAX_CV_TIME;
-    setMaxCVTime(1.0); // max 1h CV charge
+    setMaxCVTime(3.0); // cv charge time in h
     // en_jeita;
     // en_c_over_x_term;
     // C_OVER_X_THRESHOLD;
     // MAX_CHARGE_TIME;
-    setMaxChargeTime(4);
+    setMaxChargeTime(10);
     // LIFEPO4_RECHARGE_THRESHOLD;
     setLIFEPO4RechargeThreshold(3.2);
 
@@ -459,6 +464,7 @@ int BatteryManager::sampleMeasSys(){
     forceMeasSysOn();
     // wait for smbalert
     int t = 0;
+    // alertevent set in ISR
     while(alertevent == false){
         wait_ms(1);
         t++;
@@ -468,10 +474,12 @@ int BatteryManager::sampleMeasSys(){
     
     alertevent = false;
     // verify meas sys alert
-    if(getLimitAlert(en_meas_sys_valid_alert))
-        printf("en_meas_sys_valid_alert is true\n");
-    else
-        printf("en_meas_sys_valid_alert is false");
+    // if(_debug){
+    //     if(getLimitAlert(en_meas_sys_valid_alert))
+    //         printf("en_meas_sys_valid_alert is true\n");
+    //     else
+    //         printf("en_meas_sys_valid_alert is false\n");
+    // }
 
     // disable meas sys alert
     clearLimitAlert(en_meas_sys_valid_alert);

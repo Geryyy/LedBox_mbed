@@ -40,7 +40,6 @@
             "command": "mbed",
             "args": [
                 "compile",
-                "--profile=debug",
                 "-t",
                 "GCC_ARM",
                 "-m",
@@ -82,7 +81,7 @@
             "command": "ST-LINK_CLI.exe",
             "args": [
                 "-C", "SWD", 
-                "-P", "./BUILD/NUCLEO_L152RE/GCC_ARM-Debug/ledbox-rev1.1.bin", "0x08000000",
+                "-P", "./BUILD/NUCLEO_L152RE/GCC_ARM/ledbox-rev1.1.bin", "0x08000000",
                 "-V", 
                 "-Rst"
             ],

@@ -1,19 +1,17 @@
 #include <stdio.h>
 #include "terminal.h"
-
 #include "mbed.h"
 #include "BSP/BSP.h"
 #include "LEDdriver.h"
 #include "BatteryManager.h"
-#include "RFM98W.h"
+#include "logprintf.h"
 
 extern Serial pc;
-extern RFM98W radio;
 extern BatteryManager bat;
 extern LEDdriver L1;
 extern LEDdriver L2;
-extern Thread LEDdriverThread;
 
+#define printf xprintf
 /**
 * Example Commands
 */
@@ -25,8 +23,6 @@ error_t _led1on(int argc, arg_t* argv);
 error_t _led1off(int argc, arg_t* argv);
 error_t _led2on(int argc, arg_t* argv);
 error_t _led2off(int argc, arg_t* argv);
-error_t _ledshowon(int argc, arg_t* argv);
-error_t _ledshowoff(int argc, arg_t* argv);
 error_t _send(int argc, arg_t* argv);
 error_t _getChargeCurrent(int argc, arg_t* argv);
 error_t _setChargeCurrent(int argc, arg_t* argv);
@@ -63,8 +59,8 @@ termcmd_t cmd_systemstatus{
 
 termcmd_t cmd_led1on{
 	"led1on",
-	"led1on [float:current] [float:pwm]",
-	"Turn LED 1 on ",
+	"led1on [float:current] [bool:pwm]",
+	"Turn LED 1 on; pwm can turn led on and off fast (for manual pwm generation in software) ",
 	_led1on
 };
 
@@ -77,8 +73,8 @@ termcmd_t cmd_led1off{
 
 termcmd_t cmd_led2on{
 	"led2on",
-	"led2on [float:current] [float:pwm]",
-	"Turn LED 2 on ",
+	"led2on [float:current] [bool:pwm]",
+	"Turn LED 2 on; pwm can turn led on and off fast (for manual pwm generation in software) ",
 	_led2on
 };
 
@@ -87,20 +83,6 @@ termcmd_t cmd_led2off{
 	"led2off",
 	" Turn LED 2 off ",
 	_led2off
-};
-
-termcmd_t cmd_ledshowon{
-	"ledshowon",
-	"ledshowon",
-	"Turn on LED Show",
-	_ledshowon
-};
-
-termcmd_t cmd_ledshowoff{
-	"ledshowoff",
-	"ledshowoff",
-	"Turn off LED Show",
-	_ledshowoff
 };
 
 termcmd_t cmd_send{
@@ -215,7 +197,7 @@ error_t _systemstatus(int argc, arg_t* argv) {
 error_t _led1on(int argc, arg_t* argv){
 	if(argc == 3){
 		float current = atof(argv[1].arg);
-		float pwm = atof(argv[2].arg);
+		int pwm = atol(argv[2].arg);
 		L1.setILed(current);
 		L1.setPWM(pwm);
 		L1.on();
@@ -245,7 +227,7 @@ error_t _led1off(int argc, arg_t* argv){
 error_t _led2on(int argc, arg_t* argv){
 	if(argc == 3){
 		float current = atof(argv[1].arg);
-		float pwm = atof(argv[2].arg);
+		int pwm = atol(argv[2].arg);
 		L2.setILed(current);
 		L2.setPWM(pwm);
 		L2.on();
@@ -253,12 +235,12 @@ error_t _led2on(int argc, arg_t* argv){
 	else if(argc == 2){
 		float current = atof(argv[1].arg);
 		L2.setILed(current);
-		L2.setPWM(0.5);
+		L2.setPWM(1);
 		L2.on();
 	}
 	else if(argc == 1){
 		L2.setILed(0.1);
-		L2.setPWM(0.5);
+		L2.setPWM(1);
 		L2.on();
 	}
 	else{
@@ -272,20 +254,11 @@ error_t _led2off(int argc, arg_t* argv){
     return E_SUCCESS;
 }
 
-error_t _ledshowon(int argc, arg_t* argv){
-    LEDdriverThread.start(LEDdriverTask);
-    return E_SUCCESS;
-}
-
-error_t _ledshowoff(int argc, arg_t* argv){
-    LEDdriverThread.terminate();
-    return E_SUCCESS;
-}
-
 error_t _send(int argc, arg_t* argv){
 	if(argc > 1){
 		for (int i = 1; i < argc; i++) {
-			radio.sendPacket(argv[i].arg,strlen(argv[i].arg));
+			#warning implement radio
+			// radio.sendPacket(argv[i].arg,strlen(argv[i].arg));
 		}
 	}
 	else{
@@ -366,8 +339,8 @@ error_t _setHeaterOff(int argc, arg_t* argv){
 
 /*** command list ***/
 termcmd_t *cmd_list[] = {	&cmd_printStatus, &cmd_argtest, &cmd_systemstatus, &cmd_led1on, \
-							&cmd_led1off, &cmd_led2on, &cmd_led2off, &cmd_ledshowon, \
-							&cmd_ledshowoff, &cmd_send, &cmd_setChargeCurrent, &cmd_getChargeCurrent, \
+							&cmd_led1off, &cmd_led2on, &cmd_led2off, \
+							&cmd_send, &cmd_setChargeCurrent, &cmd_getChargeCurrent, \
 							&cmd_meassyson, &cmd_meassysoff, &cmd_sampmeas, &cmd_setsoc, &cmd_getsoc, \
 							&cmd_heateroff, &cmd_heateron
 						};

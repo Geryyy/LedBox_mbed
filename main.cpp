@@ -9,49 +9,54 @@
 #include "libfifo.h"
 #include <cstddef>
 #include "RFM98W.h"
+#include "Radio.h"
 #include "TerminalParser/terminal.h"
 #include "com.h"
+#include "logprintf.h"
+#include "DS1820.h"
 
-// void init();
-// void BatteryTaskRadio();
-// void radioTransceiveTask();
-// void sendTestMsg();
-// void sendTestHKD();
-// void terminalTask();
-// void SystemTask();
+/* for LOG and WARNING */
+#define MODULE_NAME "MAIN"
 
-signed char rxCallback(fifo_t *buffer){
-    return 0;
-}
-/*** TASKS ***/
+/* DS18b20 Temperature Sensor: Box Temperature */
+#define DATA_PIN PA_9
+#define VDD_PIN PA_8
 
 /****************** MAIN **********************/
-signed char smp_frameReady(fifo_t* buffer);
+bool _debugSMPCallbacks = false;
+bool _debug = true;
 
+signed char smp_frameReady(fifo_t* buffer);
+signed char smp_rogueframeReady(fifo_t* buffer);
 
 Serial pc(USBTX, USBRX, 9600);
-// Thread LEDdriverThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDdriverThread");
-// Thread LEDThread(osPriorityNormal, OS_STACK_SIZE,NULL,"LEDThread");
-Thread WatchdogThread(osPriorityNormal, OS_STACK_SIZE,NULL,"WatchdogThread");
-// Thread SystemThread(osPriorityNormal, OS_STACK_SIZE,NULL,"SystemThread");
-// Thread radioThread;
-// Thread terminalThread;
-
-LowPowerTicker RadioTicker;
-LowPowerTicker SystemTicker;
-
-RFM98W radio(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 0, smp_frameReady, NULL, false);
-BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA, 1.1, false);
+RFM98W radiophy(PB_15, PB_14, PB_13, PB_12, PC_6, PC_7, 0, false);
+Radio radio(smp_frameReady,smp_rogueframeReady,&radiophy, Radio::remote, false);
+BatteryManager bat = BatteryManager(LTC4015_ADDR, SDA,SCL,SMBA, 20.0, false);
 LEDdriver L1(LED1_SHDN, LED1_PWM, ILED1);
 LEDdriver L2(LED2_SHDN, LED2_PWM, ILED2);
-Com radiocom = Com();
+Com radiocom = Com(false);
+// DS1820 probe(DATA_PIN);
+// DigitalOut VDDPin(VDD_PIN);
 
 DigitalOut StatusLed1(PC_12,1);
 DigitalOut StatusLed2(PC_11,1);
 DigitalOut StatusLed3(PC_10,1);
+DigitalIn StatusButton(USER_BUTTON);
+
+float BoxTemperature;
 
 #define DATASIZE 128
 uint8_t data[DATASIZE];
+
+signed char smp_rogueframeReady(fifo_t* buffer){
+    static int i = 0;
+
+    if(_debugSMPCallbacks)
+        LOG("\n-->smp rogue frame callback!! i=%d\n",i);
+    i++;
+    return 0;
+}
 
 signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
 {
@@ -71,8 +76,11 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
             j++;
         }
     }
-    // printf("\n");
-    StatusLed1 = !StatusLed1;
+    static int i = 0;
+    if(_debugSMPCallbacks)
+        LOG("\n-->smp frame received!! i=%d\n",i);
+    i++;
+    /* write settings to LED Driver */
     radiocom.updateLaserSettings(data,j);
     return len;
 }
@@ -80,50 +88,105 @@ signed char smp_frameReady(fifo_t* buffer) //Frame wurde empfangen
 void sendHKD(){
     static uint8_t hkd[128];
     int len = radiocom.sendHKD(hkd,128);
+    
     if(len>0){
         radio.sendPacket((char*)hkd,len);
     }
     else{
     }
+    
+    if(_debug){
+        radiocom.printHKD();
+    }
 }
 
+float radioTZyklus = 0.5;
+float systemTZyklus = 6.0;
+
 void radioTask(){
-    StatusLed2 = !StatusLed2;
-    radio.serviceRadio();
+    // StatusLed2 = !StatusLed2;
+    radio.run(radioTZyklus);
 }
 
 void SystemTask(){
-    const float TZyklus = 1.0;
+    const float TZyklus = systemTZyklus;
     sendHKD(); 
     bat.controller(TZyklus); // battery manager
-    StatusLed3 = !StatusLed3;
+    // StatusLed3 = !StatusLed3;
+    // VDDPin = 1;
+    // probe.convertTemperature(true, DS1820::all_devices);         //Start temperature conversion, wait until ready
+    // BoxTemperature = probe.temperature();
+    // VDDPin = 0;
+    BoxTemperature = getMCUTemp();
+}
+
+void BlinkTask(){
+    StatusLed1 = 0; // on
+    wait_ms(20);
+    StatusLed1 = 1; // off
+
+    // show battery state of charge
+    if(StatusButton == 0){
+        if(bat.data.stateofcharge > 0.75){
+            StatusLed1 = 0;
+        }
+        if(bat.data.stateofcharge > 0.5){
+            StatusLed2 = 0;
+        }
+        if(bat.data.stateofcharge > 0.25){
+            StatusLed3 = 0;
+        }
+    }
+    else{
+        StatusLed1 = 1; // off
+        StatusLed2 = 1; 
+        StatusLed3 = 1;
+    }
 }
 
 void init(){
-    printf("LED Box Rev 0.1\nGerald Ebmer (c) 2018\nACIN TU WIEN\n\n");
-    printf("System Clock: %ld\n", SystemCoreClock);
-    // procResetCounter();
-    // printDeviceStats();
+    xprintf("LED Box Rev 1.0\nGerald Ebmer (c) 2018\nACIN TU WIEN\n\n");
+    xprintf("System Clock: %ld\n", SystemCoreClock);
+    procResetCounter();
+    printDeviceStats();
 }
 
+void terminalTask();
 
 int main()
 {   
-    Thread radioThread;
-    Thread systemThread;
+    Thread radioThread(osPriorityNormal, OS_STACK_SIZE,NULL,"RadioThread");
+    Thread systemThread(osPriorityNormal, OS_STACK_SIZE,NULL,"SystemThread");
+    Thread watchdogThread(osPriorityNormal, OS_STACK_SIZE,NULL,"WatchdogThread");
+    Thread statusLEDThread(osPriorityNormal, OS_STACK_SIZE,NULL,"StatusLEDThread");
+    /* Thread EventQueue and LowPowerTicker for PowerLED OOK is used in com Module */
+    // Thread terminalThread;
+
     EventQueue radioevents;
     EventQueue systemevents;
+    EventQueue statusevents;
+
     radioThread.start(callback(&radioevents, &EventQueue::dispatch_forever));
     systemThread.start(callback(&systemevents, &EventQueue::dispatch_forever));
+    statusLEDThread.start(callback(&statusevents,&EventQueue::dispatch_forever));
+    watchdogThread.start(WatchdogTask);
 
     init();
 
-    RadioTicker.attach(radioevents.event(&radioTask),0.2);
-    SystemTicker.attach(systemevents.event(&SystemTask),1);
+    LowPowerTicker RadioTicker;
+    LowPowerTicker SystemTicker;
+    LowPowerTicker StatusLEDTicker;
+
+    RadioTicker.attach(radioevents.event(&radioTask),radioTZyklus);
+    SystemTicker.attach(systemevents.event(&SystemTask),systemTZyklus);
+    StatusLEDTicker.attach(statusevents.event(&BlinkTask),2.0);
+
+    // terminalThread.start(terminalTask);
     
     while(true) {
-        wait(1);
-        radio.stopreceive();
+        wait(0.1);
+        printOnTerminal(); // display xprint output
+        sleep();
     }
 }
 
@@ -131,18 +194,19 @@ int main()
 
 void terminalTask(){
     char *cmdstring;
-	printf("TerminalParser 0.1\n\n");
+	xprintf("TerminalParser\n\n");
 
     while(true){
 
-        printf("\nenter command: \n");
+        xprintf("\nenter command: \n");
 		cmdstring = getline();
-
-		if (strcmp(cmdstring, "exit\n") == 0)
-			break;
+        xprintf("getline: %s\n",cmdstring);
+		// if (strcmp(cmdstring, "exit\n") == 0)
+		// 	break;
 		procTerminalString(cmdstring, cmd_list);
         free(cmdstring);
         wait(0.1);
     }
 }
+
 
