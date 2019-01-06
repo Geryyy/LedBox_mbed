@@ -117,7 +117,7 @@ void SystemTask(){
     // probe.convertTemperature(true, DS1820::all_devices);         //Start temperature conversion, wait until ready
     // BoxTemperature = probe.temperature();
     // VDDPin = 0;
-    BoxTemperature = 22.0;//getMCUTemp();
+    BoxTemperature = getMCUTemp();
 }
 
 void BlinkTask(){

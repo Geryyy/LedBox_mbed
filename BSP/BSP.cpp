@@ -31,12 +31,16 @@ float getUrefCal(){
     return UrefCal * VddaCal;
 }
 
+#include "logprintf.h"
+
 static AnalogIn adc_vref(ADC_VREF);
 float getSysVoltage(){
     float UrefCal = getUrefCal(); // [V]
     float Uref_raw = adc_vref.read();
+    xprintf("Uref_raw=%f\n",Uref_raw);
     return UrefCal / Uref_raw; // System Voltage [V]
 }
+
 
 static AnalogIn adc_temp(ADC_TEMP);
 float getMCUTemp(){
@@ -54,6 +58,7 @@ float getMCUTemp(){
     float U_Traw = adc_temp.read();
     float Uref = getSysVoltage();
     float Temp = k * U_Traw * Uref + d;
+    xprintf("getMCUTemp(): U_Traw=%f\tUref=%f\n",U_Traw, Uref);
     return Temp;
 }
 
